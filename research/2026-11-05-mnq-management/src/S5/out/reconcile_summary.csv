@@ -1,0 +1,11 @@
+,reference model,generator model
+trades,332.0,332.0
+exact,282.0,316.0
+time_mismatch,20.0,16.0
+px_mismatch_any,17.0,12.0
+px_mismatch_le_2ticks,4.0,0.0
+reason_mismatch,13.0,12.0
+add_mismatch,1.0,1.0
+net_mismatch,43.0,12.0
+sum_actual_minus_replay_usd,55.48,-877.52
+sum_abs_diff_usd,1407.52,2320.52

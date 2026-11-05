@@ -1,0 +1,9 @@
+explained_by,trades,sessions,sum_actual_minus_replay_usd,sum_abs_usd
+reference,282,216,0.0,0.0
+MKT fills priced off NQ (signal instrument) not MNQ,27,27,5.5,13.5
+UNEXPLAINED: MANUAL exit at intra-bar price,10,10,160.5,1282.5
+exact touch does NOT fire stop (penetration rule),5,5,0.0,0.0
+stop/target evaluated on NQ bars,4,4,0.0,1.0
+bracket not armed in entry bar,2,2,-26.5,26.5
+add skipped when trade exits in the add bar,1,1,-32.02,32.02
+"gapped-through limit filled at limit, not open",1,1,-52.0,52.0

@@ -1,0 +1,270 @@
+
+====================================================================================================
+0. ENGINE VALIDATION vs trades.csv (original policy, S6 engine) -- SYNTHETIC
+====================================================================================================
+  n_trades                     332
+  n_sessions                   242
+  n_manual                     10
+  exit_ts_match                0.9752
+  exit_px_match                0.9845
+  net_match_1c                 0.9037
+  add_match                    0.9969
+  journal_net_nonmanual        15,882.7000
+  replay_net_nonmanual         15,874.2200
+  journal_net_all              15,369.7000
+  replay_net_all               15,200.7200
+  journal_manual_net           -513.0000
+  replay_manual_mech_net       -673.5000
+
+====================================================================================================
+1. POLICY GRID -- Stage A paired replay, entries fixed, S6 engine, SYNTHETIC, costs included
+====================================================================================================
+                           label  n_changed_trades  n_changed_sessions  sum_d_usd  mean_d_R  pct_sessions_pos  pct_sessions_neg  boot_ci05  boot_p_le_0
+                kx_target m=None                97                  97   60290.00    1.2596          0.276860          0.123967  42955.975        0.000
+kx_notarget+trail Y=2.0 dist=1.5                98                  98   39578.00    0.8142          0.318182          0.086777  30401.300        0.000
+kx_notarget+trail Y=2.5 dist=1.5                97                  97   39327.00    0.8076          0.318182          0.082645  29342.500        0.000
+                 kx_target m=6.0                97                  97   36617.00    0.7685          0.305785          0.095041  26950.375        0.000
+kx_notarget+trail Y=2.5 dist=1.0                97                  97   30741.00    0.6316          0.314050          0.086777  22390.950        0.000
+                 kx_target m=5.0                97                  97   28772.00    0.6104          0.314050          0.086777  20493.250        0.000
+kx_notarget+trail Y=2.0 dist=1.0                98                  98   28762.00    0.5889          0.289256          0.115702  20683.425        0.000
+                 kx_target m=4.0                97                  97   21845.50    0.4609          0.338843          0.061983  15542.825        0.000
+                 kx_target m=3.5                97                  97   17717.00    0.3731          0.359504          0.041322  12643.350        0.000
+kx_notarget+trail Y=2.5 dist=0.5                96                  96   12874.00    0.2589          0.322314          0.074380   8539.050        0.000
+                px_target m=None                64                  64   12617.50    0.2449          0.185950          0.078512   7621.425        0.000
+kx_notarget+trail Y=2.0 dist=0.5                97                  97   11096.50    0.2114          0.264463          0.136364   7384.650        0.000
+               target_mult m=3.0                97                  97   11044.00    0.2302          0.367769          0.033058   7451.525        0.000
+                 kx_target m=3.0                97                  97   11044.00    0.2302          0.367769          0.033058   7451.525        0.000
+                 px_target m=3.0                64                  64   10875.50    0.2187          0.206612          0.057851   7288.925        0.000
+                 px_target m=2.0                64                  64    7833.00    0.1586          0.227273          0.037190   5490.050        0.000
+                 px_target m=1.5                64                  64    5284.00    0.1066          0.235537          0.028926   3545.700        0.000
+                 px_target m=1.0                64                  64    2673.00    0.0524          0.235537          0.028926   1924.650        0.000
+                     px_cap 2.0R                 0                   0       0.00    0.0000          0.000000          0.000000      0.000        1.000
+                     px_cap 1.5R                 0                   0       0.00    0.0000          0.000000          0.000000      0.000        1.000
+               noprog T=30 X=0.2                11                  11     -69.50    0.0010          0.033058          0.012397  -1199.575        0.512
+                     px_cap 1.0R                 5                   5     -95.50   -0.0018          0.000000          0.020661   -207.500        1.000
+                  time_exit T=60                32                  30     -99.50   -0.0058          0.053719          0.070248  -1753.225        0.536
+               noprog T=30 X=0.3                19                  19    -151.00    0.0012          0.045455          0.033058  -1425.700        0.574
+        breakeven Y=1.2 lock=0.1                20                  20    -349.00   -0.0053          0.049587          0.033058  -2553.075        0.577
+               noprog T=30 X=0.5                25                  25    -423.50   -0.0035          0.053719          0.049587  -1725.700        0.736
+                  time_exit T=90                14                  13    -649.00   -0.0140          0.028926          0.024793  -1995.825        0.772
+        breakeven Y=1.2 lock=0.0                20                  20    -743.50   -0.0131          0.049587          0.033058  -2983.225        0.680
+               noprog T=20 X=0.2                21                  21    -864.50   -0.0150          0.049587          0.037190  -2143.625        0.889
+                  time_exit T=45                49                  45    -935.50   -0.0194          0.070248          0.115702  -3138.550        0.753
+               noprog T=15 X=0.2                34                  33    -983.00   -0.0161          0.082645          0.053719  -2473.500        0.884
+               noprog T=10 X=0.3                84                  75   -1002.54   -0.0117          0.194215          0.115702  -3514.028        0.742
+        breakeven Y=1.2 lock=0.3                24                  24   -1074.50   -0.0270          0.049587          0.049587  -3476.050        0.733
+               noprog T=20 X=0.3                32                  31   -1158.50   -0.0209          0.061983          0.066116  -2701.075        0.919
+               noprog T=15 X=0.3                46                  41   -1195.00   -0.0192          0.095041          0.074380  -2939.325        0.896
+               noprog T=20 X=0.5                49                  45   -1689.50   -0.0304          0.082645          0.103306  -3428.175        0.957
+               noprog T=15 X=0.5                68                  59   -1702.50   -0.0266          0.119835          0.123967  -3678.950        0.933
+               noprog T=10 X=0.2                66                  63   -1862.04   -0.0309          0.161157          0.099174  -4133.591        0.927
+        breakeven Y=1.0 lock=0.0                34                  34   -2329.50   -0.0439          0.078512          0.061983  -5610.225        0.907
+        breakeven Y=1.0 lock=0.1                36                  36   -2468.54   -0.0464          0.078512          0.070248  -5818.333        0.917
+               target_mult m=2.0                61                  61   -2471.50   -0.0526          0.066116          0.185950  -4005.625        0.990
+                   add_trail 0.5                52                  52   -2551.50   -0.0566          0.045455          0.169421  -3938.875        1.000
+               noprog T=10 X=0.5               117                 101   -2683.66   -0.0437          0.231405          0.185950  -5822.958        0.920
+        breakeven Y=1.0 lock=0.3                41                  41   -2824.54   -0.0619          0.078512          0.090909  -6247.955        0.931
+                   add_trail 0.3                63                  63   -3042.00   -0.0667          0.045455          0.214876  -4433.075        1.000
+                noprog T=5 X=0.3               145                 123   -3049.80   -0.0579          0.297521          0.210744  -7131.501        0.915
+        breakeven Y=0.8 lock=0.0                53                  53   -3147.60   -0.0568          0.128099          0.090909  -6744.789        0.942
+        breakeven Y=0.5 lock=0.1                96                  94   -3341.28   -0.0621          0.223140          0.165289  -7987.118        0.894
+        breakeven Y=0.8 lock=0.1                56                  56   -3396.64   -0.0611          0.128099          0.103306  -7251.242        0.938
+        breakeven Y=0.6 lock=0.1                80                  80   -3574.22   -0.0666          0.190083          0.140496  -8087.449        0.925
+                          no_add                74                  74   -3574.98   -0.0797          0.045455          0.260331  -5095.262        1.000
+        breakeven Y=0.6 lock=0.0                76                  76   -3581.68   -0.0665          0.190083          0.123967  -7857.241        0.936
+        breakeven Y=0.5 lock=0.0                91                  89   -3636.70   -0.0682          0.223140          0.144628  -8130.829        0.932
+                          add_be                74                  74   -3758.50   -0.0834          0.045455          0.260331  -5288.950        1.000
+                noprog T=5 X=0.2               115                 104   -3817.70   -0.0680          0.239669          0.190083  -7375.198        0.973
+        breakeven Y=0.6 lock=0.3                93                  91   -4296.32   -0.0937          0.190083          0.185950  -9009.574        0.957
+        breakeven Y=0.8 lock=0.3                66                  65   -4564.24   -0.0962          0.128099          0.140496  -8828.046        0.975
+                  time_exit T=30                89                  84   -4859.00   -0.0968          0.123967          0.223140  -7960.750        0.993
+        breakeven Y=0.5 lock=0.3               116                 112   -5679.50   -0.1175          0.223140          0.239669 -10690.449        0.979
+                noprog T=5 X=0.5               190                 152   -5762.00   -0.1121          0.347107          0.280992 -10702.286        0.987
+            trail Y=1.0 dist=0.8                59                  59   -5871.54   -0.1210          0.078512          0.165289  -9878.965        0.995
+            trail Y=0.8 dist=0.8                77                  77   -6291.64   -0.1273          0.128099          0.190083 -10771.460        0.996
+            trail Y=0.5 dist=0.8               109                 108   -6293.70   -0.1285          0.223140          0.223140 -11209.555        0.991
+            trail Y=1.0 dist=0.5                78                  78   -8789.04   -0.1815          0.078512          0.243802 -13134.598        1.000
+            trail Y=0.5 dist=0.5               135                 132   -9206.34   -0.1944          0.223140          0.322314 -14728.600        0.999
+                  time_exit T=20               134                 120   -9243.56   -0.1814          0.181818          0.314050 -13373.008        1.000
+            trail Y=0.8 dist=0.5                99                  98   -9635.26   -0.2028          0.128099          0.276860 -14587.660        1.000
+            trail Y=1.0 dist=0.3                97                  96  -10793.06   -0.2244          0.078512          0.318182 -15308.927        1.000
+               target_mult m=1.5               101                 101  -11360.04   -0.2314          0.016529          0.400826 -14038.865        1.000
+            trail Y=0.5 dist=0.3               152                 148  -11581.58   -0.2420          0.223140          0.388430 -16956.580        1.000
+            trail Y=0.8 dist=0.3               116                 114  -11727.90   -0.2452          0.128099          0.342975 -16711.906        1.000
+                  time_exit T=15               174                 151  -13581.16   -0.2669          0.235537          0.388430 -18111.016        1.000
+               target_mult m=1.0               121                 118  -14762.98   -0.3038          0.078512          0.409091 -19505.260        1.000
+                  time_exit T=10               227                 187  -16179.48   -0.3199          0.326446          0.446281 -21766.224        1.000
+
+  grid cells examined in section 1: 74
+
+  STRONGEST on development data (by paired sum of net USD): kx_target m=None  policy={'kx_target_mult': None}
+
+====================================================================================================
+POLICY UNDER ATTACK: kx_target m=None  {'kx_target_mult': None}
+====================================================================================================
+  changed trades 97 in 97 sessions; paired sum $60,290 (418.2 R over 332 trades / 242 sessions, costs incl.)
+  base total $15,201  alt total $75,491
+  exit reason, base (rows) -> alt (cols) among changed trades:
+exit_reason  STOP  TIME_EOD
+exit_reason                
+TARGET         19        78
+  changed trades: d_usd mean 621.5 median 435.0 min -859.5 max 3,984.0; share with d<0: 0.309
+  alt hold minutes among changed trades: mean 305, base 35
+  largest winners (top 10% baseline net R, n=34, thr 2.65R): base $14,858 -> alt $38,033
+
+====================================================================================================
+MECHANISM CHECK: KX trades that hit the ORIGINAL target -- MNQ price at 15:55 open relative to target (R units)
+====================================================================================================
+  n=97 target-hit KX trades in 97 sessions: mean continuation 2.56 R, median 2.17 R, SD 6.17 R, share >0: 0.70
+           count  mean  median   std
+strategy                            
+KX_ORB_v1     67  2.41    1.25  6.61
+KX_ORB_v2     30  2.90    2.78  5.14
+  PX target-hit trades n=64: mean continuation 1.16 R, SD 2.47 R
+
+====================================================================================================
+(a) SESSION CONCENTRATION -- SYNTHETIC
+====================================================================================================
+  remove top  1 sessions by benefit: remaining $56,306 = 93.4% of total
+  remove top  3 sessions by benefit: remaining $50,572 = 83.9% of total
+  remove top  5 sessions by benefit: remaining $45,520 = 75.5% of total
+  remove top 10 sessions by benefit: remaining $35,049 = 58.1% of total
+  top 1 session 2025-09-18 $3,984; top-5 sessions sum $14,770 (24.5%)
+  sessions with benefit>0: 67, <0: 30, =0: 145 of 242
+  sessions needed to reach 50% of the benefit: 13 (of 67 positive sessions)
+  leave-one-session-out: min $56,306 max $61,150 (all >0: True)
+  session bootstrap 2000 draws: sum mean $59,862, 90% CI [42,388, 77,694], 95% CI [38,289, 81,776], P(sum<=0)=0.0000
+  top 10% of changed trades (n=10) carry $25,241 = 41.9% of the benefit
+
+====================================================================================================
+(b) PARAMETER NEIGHBOURHOOD of the policy under attack -- SYNTHETIC
+====================================================================================================
+                              label  n_changed_trades  n_changed_sessions  sum_d_usd  mean_d_R  pct_sessions_pos  pct_sessions_neg  boot_ci05  boot_p_le_0
+                    KX target m=2.5                84                  84     3535.0     0.073             0.293             0.054    876.250         0.01
+                    KX target m=3.0                97                  97    11044.0     0.230             0.368             0.033   7220.250         0.00
+                    KX target m=3.5                97                  97    17717.0     0.373             0.360             0.041  12366.450         0.00
+                    KX target m=4.0                97                  97    21845.5     0.461             0.339             0.062  15523.325         0.00
+                    KX target m=5.0                97                  97    28772.0     0.610             0.314             0.087  19862.575         0.00
+                    KX target m=6.0                97                  97    36617.0     0.768             0.306             0.095  25713.650         0.00
+                    KX target m=8.0                97                  97    44690.5     0.935             0.281             0.120  30446.125         0.00
+                   KX target m=10.0                97                  97    51354.0     1.061             0.277             0.124  35261.075         0.00
+                   KX target m=None                97                  97    60290.0     1.260             0.277             0.124  41786.300         0.00
+        KX no target, flat at 12:00                99                  99    41318.5     0.853             0.314             0.095  29515.775         0.00
+        KX no target, flat at 13:00                97                  97    43940.0     0.918             0.302             0.099  30490.325         0.00
+        KX no target, flat at 14:00                96                  96    51038.0     1.078             0.289             0.107  35330.675         0.00
+        KX no target, flat at 15:00                97                  97    55679.0     1.173             0.281             0.120  38613.725         0.00
+        KX no target, flat at 15:30                97                  97    56321.0     1.182             0.260             0.140  38968.000         0.00
+KX no target + trail Y=2.0 dist=0.5                97                  97    11096.5     0.211             0.264             0.136   7207.500         0.00
+KX no target + trail Y=2.0 dist=1.0                98                  98    28762.0     0.589             0.289             0.116  20229.700         0.00
+KX no target + trail Y=2.0 dist=1.5                98                  98    39578.0     0.814             0.318             0.087  29107.475         0.00
+KX no target + trail Y=2.0 dist=2.0                98                  98    44487.0     0.917             0.302             0.103  32357.175         0.00
+KX no target + trail Y=2.5 dist=0.5                96                  96    12874.0     0.259             0.322             0.074   8420.075         0.00
+KX no target + trail Y=2.5 dist=1.0                97                  97    30741.0     0.632             0.314             0.087  21706.900         0.00
+KX no target + trail Y=2.5 dist=1.5                97                  97    39327.0     0.808             0.318             0.083  28286.625         0.00
+KX no target + trail Y=2.5 dist=2.0                97                  97    44437.0     0.914             0.302             0.099  31864.100         0.00
+KX no target + trail Y=3.0 dist=0.5                97                  97    21522.0     0.459             0.368             0.033  15560.775         0.00
+KX no target + trail Y=3.0 dist=1.0                97                  97    33335.0     0.693             0.355             0.045  24093.825         0.00
+KX no target + trail Y=3.0 dist=1.5                97                  97    41825.0     0.857             0.335             0.066  30626.575         0.00
+KX no target + trail Y=3.0 dist=2.0                97                  97    44397.0     0.917             0.310             0.091  31927.675         0.00
+    KX no target + lock Y=2.0 L=0.0                98                  98    61112.0     1.272             0.264             0.140  42972.000         0.00
+    KX no target + lock Y=2.0 L=1.0                98                  98    53863.0     1.104             0.223             0.182  37112.350         0.00
+    KX no target + lock Y=2.5 L=1.0                97                  97    55361.0     1.134             0.231             0.169  37451.625         0.00
+    KX no target + lock Y=2.0 L=1.5                98                  98    46441.0     0.930             0.178             0.227  30863.200         0.00
+  neighbourhood cells examined: 30; sign positive in 30 of 30
+
+====================================================================================================
+(c) FILL ASSUMPTIONS -- extra slippage on every market/stop fill (both policies), same-bar ordering, stop touch vs through -- SYNTHETIC
+====================================================================================================
+ total_slip_ticks     same_bar stop_fill  base_usd  alt_usd  sum_d_usd  boot_ci05  p_le_0
+                1   stop_first     touch   15201.0  75491.0    60290.0    42861.0     0.0
+                1   stop_first   through   15717.0  76229.0    60512.0    42955.0     0.0
+                1 target_first     touch   15201.0  75491.0    60290.0    42861.0     0.0
+                1 target_first   through   15717.0  76229.0    60512.0    42955.0     0.0
+                2   stop_first     touch   14966.0  75103.0    60137.0    42695.0     0.0
+                2   stop_first   through   15483.0  75841.0    60358.0    42817.0     0.0
+                2 target_first     touch   14966.0  75103.0    60137.0    42695.0     0.0
+                2 target_first   through   15483.0  75841.0    60358.0    42817.0     0.0
+                3   stop_first     touch   14731.0  74715.0    59984.0    42531.0     0.0
+                3   stop_first   through   15250.0  75453.0    60203.0    42679.0     0.0
+                3 target_first     touch   14731.0  74715.0    59984.0    42531.0     0.0
+                3 target_first   through   15250.0  75453.0    60203.0    42679.0     0.0
+
+====================================================================================================
+(d) STRATEGY VERSION and FAMILY -- SYNTHETIC
+====================================================================================================
+                          strategy  n_trades  n_sessions  n_changed  base_usd  alt_usd  sum_d_usd  mean_d_R  pct_sess_pos  boot_ci05  p_le_0
+                         KX_ORB_v1       162         162         67    7059.0  47255.0    40196.0     1.734         0.265    24291.0     0.0
+                         KX_ORB_v2        78          78         30    5518.0  25612.0    20094.0     1.760         0.308    11778.0     0.0
+                         PX_REV_v1        92          92          0    2624.0   2624.0        0.0     0.000         0.000        0.0     1.0
+PX_REV_v1 (PX analogue: no target)        92          92         64    2624.0  15241.0    12618.0     0.884         0.489     8441.0     0.0
+
+  by quarter (all strategies):
+              n  sessions  changed  sum_d_usd
+half                                         
+Aug-Oct25    87        63       23    20427.0
+Feb-Apr26    83        59       27    16830.0
+May-Jul25    82        60       27    16650.0
+Nov25-Jan26  80        60       20     6384.0
+
+====================================================================================================
+(e) STAGE B -- chronological replay, 4-contract limit, pyramiding, 15:55 cutoff, rejected signals eligible -- SYNTHETIC
+====================================================================================================
+  journal: executed 332, rejected 14 -> [9, 12, 30, 64, 141, 147, 172, 179, 188, 200, 215, 217, 243, 313]
+  Stage B original: executed 330, rejected 16 -> [9, 12, 30, 64, 141, 147, 172, 179, 188, 194, 200, 215, 217, 243, 274, 313]; net $15,358
+  Stage B alt     : executed 321, rejected 25 -> [9, 12, 24, 30, 64, 76, 78, 100, 111, 141, 147, 163, 172, 179, 188, 194, 200, 215, 217, 225, 243, 274, 313, 331, 341]; net $75,084
+  signals BLOCKED by the alternative (executed under original, rejected under alt): 9 -> [24, 76, 78, 100, 111, 163, 225, 331, 341]
+     their net under the original Stage B: $567; strategies {'PX_REV_v1': 9}
+  signals FREED by the alternative: 0 -> []
+  common trades 321: original $14,791 -> alt $75,084 (diff $60,294)
+  adds: original 74, alt 74
+  PORTFOLIO net: original $15,358 vs alt $75,084 -> diff $59,726  (Stage A paired diff was $60,290)
+  Stage B session bootstrap 2000 draws: 90% CI [41,641, 78,975], P(<=0)=0.0000; sessions pos 67 neg 30
+  Stage A overlap flag: alt holds past a later same-session entry in 15 cases (base did not): [23, 41, 75, 77, 80, 99, 110, 138, 162, 185, 219, 224, 227, 330, 340]
+
+====================================================================================================
+(f) DRAWDOWN and WORST SESSION -- cumulative net P&L in chronological trade order -- SYNTHETIC
+====================================================================================================
+          replay  total_usd  max_dd_usd worst_session  worst_session_usd  best_session_usd  sd_session  worst_trade_usd  n_sessions_lt_minus300
+Stage A original    15201.0     -1804.0    2026-03-04             -359.0             614.0       279.0           -392.0                      12
+     Stage A alt    75491.0     -2373.0    2026-03-04             -359.0            4404.0       856.0           -392.0                      13
+Stage B original    15358.0     -1807.0    2026-03-04             -359.0             614.0       280.0           -392.0                      12
+     Stage B alt    75084.0     -2374.0    2026-03-04             -359.0            4402.0       858.0           -392.0                      16
+  changed trades ending at the ORIGINAL STOP under alt (2R winner -> full loser): 19, their paired cost $-11,880
+  worst single paired reversal: $-860 (trade 80)
+
+====================================================================================================
+CHEAPEST REAL-DATA TEST -- sample size (uses SYNTHETIC SD only as a placeholder)
+====================================================================================================
+  one-sided alpha 5%, power 80%, SD 6.17R (synthetic): detect mean post-target continuation 0.25R needs n=3768 target-hit KX trades
+  one-sided alpha 5%, power 80%, SD 6.17R (synthetic): detect mean post-target continuation 0.50R needs n=942 target-hit KX trades
+  one-sided alpha 5%, power 80%, SD 6.17R (synthetic): detect mean post-target continuation 1.00R needs n=236 target-hit KX trades
+  session-level: 97 sessions carry the 97 target hits here (~0.40 per session)
+
+DONE
+
+====================================================================================================
+EXTRAS -- SYNTHETIC
+====================================================================================================
+  LOCK variant (KX: no target; stop->entry once +2.0R touched; flat 15:55): total $76,313, paired $61,112, max DD $-1,921, worst session $-359, SD session $849, changed 98 trades, share d<0 0.347, ended at original stop: 0
+  LOCK session bootstrap 95% CI [40,324, 83,446]
+  paired d_R over ALL KX trades n=240 (240 sessions): mean 1.74R SD 4.95R; per-trade t = 5.5
+    detect mean paired benefit 0.25R/KX trade (SD 4.95R): n=2419 KX trades
+    detect mean paired benefit 0.50R/KX trade (SD 4.95R): n=605 KX trades
+    detect mean paired benefit 1.00R/KX trade (SD 4.95R): n=152 KX trades
+    detect mean paired benefit 1.50R/KX trade (SD 4.95R): n=68 KX trades
+    detect mean paired benefit 1.74R/KX trade (SD 4.95R): n=50 KX trades
+    MDE (one-sided 5%, 80% power) with n=100 KX trades: 1.23R per trade
+    MDE (one-sided 5%, 80% power) with n=240 KX trades: 0.79R per trade
+    MDE (one-sided 5%, 80% power) with n=500 KX trades: 0.55R per trade
+    MDE post-target continuation with n=50 target hits (SD 6.17R): 2.17R
+    MDE post-target continuation with n=97 target hits (SD 6.17R): 1.56R
+    MDE post-target continuation with n=200 target hits (SD 6.17R): 1.08R
+    detect continuation 1.5R needs n=105 target hits
+    detect continuation 2.5R needs n=38 target hits
+
+  BRIEF DECISION CELL: reached >= +0.8R then closed <= +0.3R while still open under the original: 60 trades in 60 sessions
+         n  sessions  base_usd  alt_usd  base_mean_R  alt_mean_R
+family                                                          
+KX      60        60    3841.6  19360.6         0.43         2.2
+  original exit reasons in this cell: {'STOP': 31, 'TARGET': 29}
+  exiting at the stall (approx +0.3R gross): 60 trades x ~0.3R = 18R vs original 26R vs no-target 132R

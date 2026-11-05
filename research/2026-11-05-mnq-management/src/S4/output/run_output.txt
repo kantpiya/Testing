@@ -1,0 +1,224 @@
+KX trades 240 in 240 sessions; with add 73 (all adds = 1 contract); MANUAL exits 6 (with add: 2)
+
+=== 0. Original policy replay vs journal (KX, non-MANUAL) ===
+non-MANUAL trades 234: exit bar identical 225, net P&L identical 233, sum |net diff| $1.50
+ trade_id    session exit_hhmm exit_hhmm_j leg1_exit_reason exit_reason  net_usd  net_pnl_usd
+      332 2026-04-20     10:02       10:02         STOP_GAP    STOP_GAP  -184.44      -182.94
+MANUAL trades (journal vs rule replay):
+ trade_id    session  has_add exit_hhmm exit_hhmm_j leg1_exit_reason  net_usd  net_pnl_usd
+        1 2025-05-01    False     11:41       11:42             STOP  -163.44      -131.94
+       15 2025-05-15    False     10:41       10:20             STOP  -197.94         1.56
+       29 2025-05-30    False     11:14       10:23             STOP  -187.92       -57.92
+      127 2025-09-12    False     11:39       11:10             STOP  -170.94       -46.44
+      193 2025-11-18     True     10:25       10:18             STOP  -297.42      -235.42
+      273 2026-02-12     True     10:52       10:15           TARGET   462.08        16.08
+Journal KX net total $12685.72; rule-replay original $12582.72
+
+Largest winners (baseline net R, held fixed): all-KX top 24 (min net R 2.97); add-subset top 7 (min net R 3.74); adds among all-KX top set: 24
+
+=== 1-2. Policy comparison (paired, entries and add fills fixed) ===
+give-back (gb) = peak gross open P&L of the whole position (favourable intra-bar extreme, legs marked together) minus realised NET P&L; R denominator = planned_risk_usd of the initial leg; 'top10% $' = net $ earned on the fixed baseline top-10% set; maxDD on chronological per-session net P&L; d = paired difference vs (a); CI = 2000 session-bootstrap draws; chg = trades whose net differs from (a)
+
+--- ADD trades only | same-bar ordering = stop_first | SYNTHETIC, net of $0.74/contract/side ---
+policy                  n  sess     net $   meanR   win%  gb$ mean gb R mean   gb$ sum  top10% $  maxDD $  worst $            d net $ [95% CI]          d meanR [95% CI]  d top $   d DD $  chg
+a_orig                 73    73     22220   2.055    85%        93      0.59      6757      3045      392     -392                                                                            0
+b_add_stop_entry       73    73     21900   2.036    85%        82      0.51      5971      3045      272     -272           -320 [-1350,+670]    -0.020 [-0.108,+0.064]       +0     -120   19
+c_add_be_after         73    73     21261   1.971    85%        90      0.57      6601      3045      392     -392           -960 [-1640,-262]    -0.085 [-0.145,-0.025]       +0       +0   14
+c_add_be_after_1R      73    73     22151   2.049    85%        92      0.58      6682      3045      392     -392             -70 [-487,+428]    -0.006 [-0.040,+0.034]       +0       +0    4
+d_all_be_on_add        73    73     20755   1.946    74%        90      0.56      6588      3045      189     -152         -1466 [-4851,+1802]    -0.109 [-0.393,+0.158]       +0     -203   19
+e_scaleout_add         73    73     21868   2.019    85%        91      0.58      6634      2716      392     -392            -353 [-997,+442]    -0.036 [-0.094,+0.031]     -330       +0   63
+
+--- ALL KX trades | same-bar ordering = stop_first | SYNTHETIC, net of $0.74/contract/side ---
+policy                  n  sess     net $   meanR   win%  gb$ mean gb R mean   gb$ sum  top10% $  maxDD $  worst $            d net $ [95% CI]          d meanR [95% CI]  d top $   d DD $  chg
+a_orig                240   240     12583   0.355    40%       147      0.96     35195     11119     1994     -392                                                                            0
+b_add_stop_entry      240   240     12263   0.349    40%       143      0.94     34409     10651     1936     -272           -320 [-1397,+643]    -0.006 [-0.034,+0.019]     -468      -58   19
+c_add_be_after        240   240     11623   0.329    40%       146      0.96     35039     10531     2071     -392           -960 [-1657,-235]    -0.026 [-0.045,-0.007]     -588      +78   14
+c_add_be_after_1R     240   240     12513   0.353    40%       146      0.96     35119     11025     1994     -392             -70 [-487,+428]    -0.002 [-0.012,+0.010]      -94       +0    4
+d_all_be_on_add       240   240     11117   0.322    37%       146      0.95     35025      9441     2254     -224         -1466 [-4929,+1633]    -0.033 [-0.121,+0.046]    -1678     +260   19
+e_scaleout_add        240   240     12230   0.344    40%       146      0.96     35071     10398     2000     -392           -353 [-1036,+422]    -0.011 [-0.030,+0.010]     -721       +7   63
+
+--- ADD trades only | same-bar ordering = target_first | SYNTHETIC, net of $0.74/contract/side ---
+policy                  n  sess     net $   meanR   win%  gb$ mean gb R mean   gb$ sum  top10% $  maxDD $  worst $            d net $ [95% CI]          d meanR [95% CI]  d top $   d DD $  chg
+a_orig                 73    73     22220   2.055    85%        93      0.59      6757      3045      392     -392                                                                            0
+b_add_stop_entry       73    73     21900   2.036    85%        82      0.51      5971      3045      272     -272           -320 [-1350,+670]    -0.020 [-0.108,+0.064]       +0     -120   19
+c_add_be_after         73    73     21261   1.971    85%        90      0.57      6601      3045      392     -392           -960 [-1640,-262]    -0.085 [-0.145,-0.025]       +0       +0   14
+c_add_be_after_1R      73    73     22151   2.049    85%        92      0.58      6682      3045      392     -392             -70 [-487,+428]    -0.006 [-0.040,+0.034]       +0       +0    4
+d_all_be_on_add        73    73     20755   1.946    74%        90      0.56      6588      3045      189     -152         -1466 [-4851,+1802]    -0.109 [-0.393,+0.158]       +0     -203   19
+e_scaleout_add         73    73     21868   2.019    85%        91      0.58      6634      2716      392     -392            -353 [-997,+442]    -0.036 [-0.094,+0.031]     -330       +0   63
+
+--- ALL KX trades | same-bar ordering = target_first | SYNTHETIC, net of $0.74/contract/side ---
+policy                  n  sess     net $   meanR   win%  gb$ mean gb R mean   gb$ sum  top10% $  maxDD $  worst $            d net $ [95% CI]          d meanR [95% CI]  d top $   d DD $  chg
+a_orig                240   240     12583   0.355    40%       147      0.96     35195     11119     1994     -392                                                                            0
+b_add_stop_entry      240   240     12263   0.349    40%       143      0.94     34409     10651     1936     -272           -320 [-1397,+643]    -0.006 [-0.034,+0.019]     -468      -58   19
+c_add_be_after        240   240     11623   0.329    40%       146      0.96     35039     10531     2071     -392           -960 [-1657,-235]    -0.026 [-0.045,-0.007]     -588      +78   14
+c_add_be_after_1R     240   240     12513   0.353    40%       146      0.96     35119     11025     1994     -392             -70 [-487,+428]    -0.002 [-0.012,+0.010]      -94       +0    4
+d_all_be_on_add       240   240     11117   0.322    37%       146      0.95     35025      9441     2254     -224         -1466 [-4929,+1633]    -0.033 [-0.121,+0.046]    -1678     +260   19
+e_scaleout_add        240   240     12230   0.344    40%       146      0.96     35071     10398     2000     -392           -353 [-1036,+422]    -0.011 [-0.030,+0.010]     -721       +7   63
+
+Same-bar stop+target ambiguity: trades whose net differs between orderings, per policy:
+  a_orig               0 trades, $ difference (target_first - stop_first) = +0.00
+  b_add_stop_entry     0 trades, $ difference (target_first - stop_first) = +0.00
+  c_add_be_after       0 trades, $ difference (target_first - stop_first) = +0.00
+  c_add_be_after_1R    0 trades, $ difference (target_first - stop_first) = +0.00
+  d_all_be_on_add      0 trades, $ difference (target_first - stop_first) = +0.00
+  e_scaleout_add       0 trades, $ difference (target_first - stop_first) = +0.00
+
+=== 2b. Given the protective stop on the add was hit, what happened next? (add trades, stop_first) ===
+  b_add_stop_entry     protective stop hit AND outcome changed: 19 trades / 19 sessions; original then reached TARGET in 8 (cost -1208 $, mean -151), original STOPPED in 11 (saving +888 $, mean +81)
+  c_add_be_after       protective stop hit AND outcome changed: 14 trades / 14 sessions; original then reached TARGET in 13 (cost -1134 $, mean -87), original STOPPED in 1 (saving +174 $, mean +174)
+  c_add_be_after_1R    protective stop hit AND outcome changed: 4 trades / 4 sessions; original then reached TARGET in 3 (cost -244 $, mean -81), original STOPPED in 1 (saving +174 $, mean +174)
+  d_all_be_on_add      protective stop hit AND outcome changed: 19 trades / 19 sessions; original then reached TARGET in 8 (cost -4126 $, mean -516), original STOPPED in 11 (saving +2661 $, mean +242)
+  Baseline add trades: 62 reached target, 11 stopped; baseline net R of add trades lies in [-3.27,3.98] with NO trade between -1.5R and +2.0R (count in (-1.5, 2.0): 0) -- the original bracket has no intermediate exit.
+
+=== 3. Does the add earn money net of its own risk? (original policy, leg 2 only) ===
+Journal fills, leg 2: n=73, net total $3484.96, mean $47.74, wins 61
+Replay (orig), leg 2: n=73, net total $3580.96, mean $49.05, median $75.52; mean own-risk $171.84 (= 1.21 x initial-leg 1R); mean leg-2 R on own risk +0.289, mean leg-2 R on initial 1R +0.364
+                   n  net_usd    mean_usd
+leg2_exit_reason                         
+STOP              11 -1854.28 -168.570909
+TARGET            62  5435.24   87.665161
+Session-bootstrap 95% CI for leg-2 total net $: [1831, 5206], P(total<=0) = 0.000
+Leg 1 of the same 73 add trades: net $18639.54; whole trade $22220.50
+Leg-2 net $ by policy (add trades, stop_first): a_orig=3581, b_add_stop_entry=3261, c_add_be_after=2621, c_add_be_after_1R=3511, d_all_be_on_add=3261, e_scaleout_add=3228
+Leg-2 exit reasons by policy: a_orig: {'TARGET': 62, 'STOP': 11}; b_add_stop_entry: {'TARGET': 54, 'STOP': 19}; c_add_be_after: {'TARGET': 49, 'STOP': 23, 'STOP_GAP': 1}; c_add_be_after_1R: {'TARGET': 59, 'STOP': 13, 'STOP_GAP': 1}; d_all_be_on_add: {'TARGET': 54, 'STOP': 19}; e_scaleout_add: {'TARGET': 62, 'STOP': 11}
+
+=== 4. Sensitivities (ADD trades, stop_first) ===
+- manual exits honoured (forced flat at journal MANUAL bar):
+    a_orig: net $21942 (d vs a +0), meanR 2.029, gbR 0.58
+    b_add_stop_entry: net $21692 (d vs a -250), meanR 2.016, gbR 0.52
+    c_add_be_after: net $20983 (d vs a -960), meanR 1.945, gbR 0.57
+    c_add_be_after_1R: net $21873 (d vs a -70), meanR 2.023, gbR 0.58
+    d_all_be_on_add: net $20755 (d vs a -1188), meanR 1.946, gbR 0.56
+    e_scaleout_add: net $21618 (d vs a -325), meanR 1.996, gbR 0.57
+- 2-tick penetration trigger instead of touch:
+    a_orig: net $22220 (d vs a +0), meanR 2.055, gbR 0.59
+    b_add_stop_entry: net $21900 (d vs a -320), meanR 2.036, gbR 0.51
+    c_add_be_after: net $21376 (d vs a -845), meanR 1.979, gbR 0.57
+    c_add_be_after_1R: net $22151 (d vs a -70), meanR 2.049, gbR 0.58
+    d_all_be_on_add: net $20755 (d vs a -1466), meanR 1.946, gbR 0.56
+    e_scaleout_add: net $21868 (d vs a -352), meanR 2.019, gbR 0.58
+
+=== 5. Leg-by-leg replays (SYNTHETIC, add trades) ===
+Policy (c) helps most:
+               a       b       c  has_add     baseR  a_leg2  c_leg2     session     dc     db
+trade_id                                                                                     
+271      -351.94 -265.94 -177.94     True -2.042719    STOP    STOP  2026-02-11  174.0   86.0
+28        350.54  350.54  350.54     True  2.921167  TARGET  TARGET  2025-05-29    0.0    0.0
+36        429.56  429.56  429.56     True  2.438465  TARGET  TARGET  2025-06-05    0.0    0.0
+41        291.54  291.54  291.54     True  2.891975  TARGET  TARGET  2025-06-12    0.0    0.0
+46        355.06  209.56  355.06     True  2.445148  TARGET  TARGET  2025-06-18    0.0 -145.5
+Policy (c) hurts a baseline top-10% winner most:
+               a       b       c  has_add     baseR  a_leg2 c_leg2     session     dc     db
+trade_id                                                                                    
+265       570.06  570.06  446.06     True  3.158752  TARGET   STOP  2026-02-04 -124.0    0.0
+203       317.04  317.04  207.04     True  3.013402  TARGET   STOP  2025-11-28 -110.0    0.0
+315       471.56  471.56  369.06     True  3.148982  TARGET   STOP  2026-03-26 -102.5    0.0
+287       522.58  377.08  428.58     True  3.000230  TARGET   STOP  2026-02-26  -94.0 -145.5
+306       458.06  266.06  378.06     True  2.990729  TARGET   STOP  2026-03-19  -80.0 -192.0
+trade 271 session 2026-02-11 SHORT KX_ORB_v2 entry 10:20 @ 22903.5 x2, stop 22946.5, target 22795.75, 1R=$172.29; add 1 @ 22859.5 at 10:24 (add's own risk to original stop $174)
+  (a) original: leg1 STOP @ 22946.75 11:35, leg2 STOP @ 22946.75 11:35; net $-351.94 (-2.04R), peak open $545, give-back $897
+  (b) add stop @ entry: leg2 STOP @ 22903.75 11:14; net $-265.94 (-1.54R)
+  (c) add BE after +0.5R: leg2 STOP @ 22859.75 10:31; net $-177.94 (-1.03R), give-back $599
+  first instant the (c) decision was knowable: close of the 10:29 bar (leg-2 stop moved to 22859.5 effective next bar); for (b) it is the add fill at 10:24 bar open
+ hhmm    close  a_leg1  a_leg2  a_leg2_stop  c_leg2  c_leg2_stop  c_realised
+10:22 22876.25  109.00     NaN          NaN     NaN          NaN        0.00
+10:23 22859.75  175.00     NaN          NaN     NaN          NaN        0.00
+10:24 22862.00  166.00   -5.00     22946.50   -5.00     22946.50        0.00
+10:25 22869.25  137.00  -19.50     22946.50  -19.50     22946.50        0.00
+10:26 22853.00  202.00   13.00     22946.50   13.00     22946.50        0.00
+10:27 22855.75  191.00    7.50     22946.50    7.50     22946.50        0.00
+10:28 22858.00  182.00    3.00     22946.50    3.00     22946.50        0.00
+10:29 22835.00  274.00   49.00     22946.50   49.00     22946.50        0.00
+10:30 22848.00  222.00   23.00     22946.50   23.00     22859.50        0.00
+10:31 22851.25  209.00   16.50     22946.50     NaN          NaN       -0.50
+10:32 22867.00  146.00  -15.00     22946.50     NaN          NaN       -0.50
+10:33 22864.00  158.00   -9.00     22946.50     NaN          NaN       -0.50
+10:34 22874.75  115.00  -30.50     22946.50     NaN          NaN       -0.50
+10:37 22830.50  292.00   58.00     22946.50     NaN          NaN       -0.50
+10:40 22805.50  392.00  108.00     22946.50     NaN          NaN       -0.50
+10:43 22831.75  287.00   55.50     22946.50     NaN          NaN       -0.50
+10:46 22823.50  320.00   72.00     22946.50     NaN          NaN       -0.50
+10:49 22832.50  284.00   54.00     22946.50     NaN          NaN       -0.50
+10:52 22841.75  247.00   35.50     22946.50     NaN          NaN       -0.50
+10:55 22857.50  184.00    4.00     22946.50     NaN          NaN       -0.50
+10:58 22837.00  266.00   45.00     22946.50     NaN          NaN       -0.50
+11:01 22836.00  270.00   47.00     22946.50     NaN          NaN       -0.50
+11:04 22829.75  295.00   59.50     22946.50     NaN          NaN       -0.50
+11:07 22860.25  173.00   -1.50     22946.50     NaN          NaN       -0.50
+11:10 22864.75  155.00  -10.50     22946.50     NaN          NaN       -0.50
+11:13 22876.25  109.00  -33.50     22946.50     NaN          NaN       -0.50
+11:16 22916.50  -52.00 -114.00     22946.50     NaN          NaN       -0.50
+11:19 22907.50  -16.00  -96.00     22946.50     NaN          NaN       -0.50
+11:22 22884.00   78.00  -49.00     22946.50     NaN          NaN       -0.50
+11:25 22897.50   24.00  -76.00     22946.50     NaN          NaN       -0.50
+11:26 22921.50  -72.00 -124.00     22946.50     NaN          NaN       -0.50
+11:27 22920.75  -69.00 -122.50     22946.50     NaN          NaN       -0.50
+11:28 22942.75 -157.00 -166.50     22946.50     NaN          NaN       -0.50
+11:29 22937.25 -135.00 -155.50     22946.50     NaN          NaN       -0.50
+11:30 22937.50 -136.00 -156.00     22946.50     NaN          NaN       -0.50
+11:31 22926.75  -93.00 -134.50     22946.50     NaN          NaN       -0.50
+11:32 22935.50 -128.00 -152.00     22946.50     NaN          NaN       -0.50
+11:33 22931.50 -112.00 -144.00     22946.50     NaN          NaN       -0.50
+11:34 22929.75 -105.00 -140.50     22946.50     NaN          NaN       -0.50
+11:35 22947.00     NaN     NaN          NaN     NaN          NaN     -173.50
+trade 265 session 2026-02-04 SHORT KX_ORB_v2 entry 10:12 @ 23884.0 x2, stop 23929.0, target 23771.25, 1R=$180.47; add 1 @ 23833.0 at 10:23 (add's own risk to original stop $192)
+  (a) original: leg1 TARGET @ 23771.25 11:05, leg2 TARGET @ 23771.25 11:05; net $570.06 (+3.16R), peak open $574, give-back $4
+  (b) add stop @ entry: leg2 TARGET @ 23771.25 11:05; net $570.06 (+3.16R)
+  (c) add BE after +0.5R: leg2 STOP @ 23833.25 10:37; net $446.06 (+2.47R), give-back $16
+  first instant the (c) decision was knowable: close of the 10:27 bar (leg-2 stop moved to 23833.0 effective next bar); for (b) it is the add fill at 10:23 bar open
+ hhmm    close  a_leg1  a_leg2  a_leg2_stop  c_leg2  c_leg2_stop  c_realised
+10:21 23849.50  138.00     NaN          NaN     NaN          NaN        0.00
+10:22 23833.25  203.00     NaN          NaN     NaN          NaN        0.00
+10:23 23824.00  240.00   18.00     23929.00   18.00     23929.00        0.00
+10:24 23827.00  228.00   12.00     23929.00   12.00     23929.00        0.00
+10:25 23816.75  269.00   32.50     23929.00   32.50     23929.00        0.00
+10:26 23817.25  267.00   31.50     23929.00   31.50     23929.00        0.00
+10:27 23802.00  328.00   62.00     23929.00   62.00     23929.00        0.00
+10:28 23790.00  376.00   86.00     23929.00   86.00     23833.00        0.00
+10:29 23803.00  324.00   60.00     23929.00   60.00     23833.00        0.00
+10:30 23801.25  331.00   63.50     23929.00   63.50     23833.00        0.00
+10:31 23811.50  290.00   43.00     23929.00   43.00     23833.00        0.00
+10:32 23814.25  279.00   37.50     23929.00   37.50     23833.00        0.00
+10:33 23801.75  329.00   62.50     23929.00   62.50     23833.00        0.00
+10:34 23811.50  290.00   43.00     23929.00   43.00     23833.00        0.00
+10:35 23816.00  272.00   34.00     23929.00   34.00     23833.00        0.00
+10:36 23813.50  282.00   39.00     23929.00   39.00     23833.00        0.00
+10:37 23833.25  203.00   -0.50     23929.00     NaN          NaN       -0.50
+10:38 23829.25  219.00    7.50     23929.00     NaN          NaN       -0.50
+10:39 23820.25  255.00   25.50     23929.00     NaN          NaN       -0.50
+10:40 23812.50  286.00   41.00     23929.00     NaN          NaN       -0.50
+10:41 23802.50  326.00   61.00     23929.00     NaN          NaN       -0.50
+10:42 23811.75  289.00   42.50     23929.00     NaN          NaN       -0.50
+10:43 23806.75  309.00   52.50     23929.00     NaN          NaN       -0.50
+10:44 23810.25  295.00   45.50     23929.00     NaN          NaN       -0.50
+10:45 23815.25  275.00   35.50     23929.00     NaN          NaN       -0.50
+10:46 23823.25  243.00   19.50     23929.00     NaN          NaN       -0.50
+10:47 23823.00  244.00   20.00     23929.00     NaN          NaN       -0.50
+10:48 23824.25  239.00   17.50     23929.00     NaN          NaN       -0.50
+10:49 23825.50  234.00   15.00     23929.00     NaN          NaN       -0.50
+10:50 23831.50  210.00    3.00     23929.00     NaN          NaN       -0.50
+10:51 23832.00  208.00    2.00     23929.00     NaN          NaN       -0.50
+10:52 23829.75  217.00    6.50     23929.00     NaN          NaN       -0.50
+10:53 23817.50  266.00   31.00     23929.00     NaN          NaN       -0.50
+10:54 23809.25  299.00   47.50     23929.00     NaN          NaN       -0.50
+10:55 23815.25  275.00   35.50     23929.00     NaN          NaN       -0.50
+10:56 23825.75  233.00   14.50     23929.00     NaN          NaN       -0.50
+10:57 23818.75  261.00   28.50     23929.00     NaN          NaN       -0.50
+10:58 23812.50  286.00   41.00     23929.00     NaN          NaN       -0.50
+10:59 23807.00  308.00   52.00     23929.00     NaN          NaN       -0.50
+11:00 23808.25  303.00   49.50     23929.00     NaN          NaN       -0.50
+11:01 23794.00  360.00   78.00     23929.00     NaN          NaN       -0.50
+11:02 23791.75  369.00   82.50     23929.00     NaN          NaN       -0.50
+11:03 23786.75  389.00   92.50     23929.00     NaN          NaN       -0.50
+11:04 23783.00  404.00  100.00     23929.00     NaN          NaN       -0.50
+11:05 23762.75     NaN     NaN          NaN     NaN          NaN      450.50
+
+=== 7. Stage-B flags ===
+  a_orig               trades holding LONGER than original:  0 (total extra minutes   0); new overlaps with a later entry in the same session: 0
+  b_add_stop_entry     trades holding LONGER than original:  0 (total extra minutes   0); new overlaps with a later entry in the same session: 0
+  c_add_be_after       trades holding LONGER than original:  0 (total extra minutes   0); new overlaps with a later entry in the same session: 0
+  c_add_be_after_1R    trades holding LONGER than original:  0 (total extra minutes   0); new overlaps with a later entry in the same session: 0
+  d_all_be_on_add      trades holding LONGER than original:  0 (total extra minutes   0); new overlaps with a later entry in the same session: 0
+  e_scaleout_add       trades holding LONGER than original: 13 (total extra minutes  70); new overlaps with a later entry in the same session: 1
+Only (e) ever holds longer: for KX_ORB_v1 (2.0R target) the add fills at entry+1.0R plus 0-2 ticks slippage, so '+1R from the add' sits a few ticks beyond the original target. All other alternatives exit legs earlier or on the same bar. Earlier leg-2 exits free one contract under the 4-contract limit, which could change later PX eligibility in the same session (Stage B, not replayed here).
+Add selection: adds occur only when initial size <= 3 (position limit 4); 50 KX trades had 4 contracts and could never add. Mean initial stop distance: add trades 40.9 pts vs non-add 35.3 pts.
