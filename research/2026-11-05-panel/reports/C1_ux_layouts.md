@@ -1,10 +1,10 @@
 # C1 — Trader Workstation and UX: What the trader must see within ten seconds of a signal
 
-**Panel:** 2026-11-05 · **Role:** C1, workstation/UX designer · **Inputs inspected:** only `00_common_brief.md` (OBSERVED: workspace is empty — no logs, no strategy code, no account rules). Every scenario number below is a **SYNTHETIC EXAMPLE** unless labeled otherwise.
+**Panel:** 2026-11-05 · **Role:** C1 · **Inputs inspected:** `00_common_brief.md` only (OBSERVED: workspace empty — no logs, strategy code or account rules). All scenario numbers are **SYNTHETIC** unless labeled otherwise.
 
 ## 1. Strongest finding or proposal, and the decision it would change
 
-**Proposal (HYPOTHESIS):** The ten-second screen should answer exactly four questions, in this order: (a) *what action*, (b) *what blocks or shortens it* (event clock, account headroom), (c) *what the action adds to correlated exposure*, (d) *what would change the recommendation*. Everything that explains *why a strategy is believed to work* (expectancy, n, Study 66/71 material) belongs one click away.
+**Proposal (HYPOTHESIS):** The ten-second screen answers four questions in order: (a) *what action*, (b) *what blocks or shortens it* (event clock, account headroom), (c) *what it adds to correlated exposure*, (d) *what would change the recommendation*. Why a strategy is believed to work (expectancy detail, Study 66/71 material) belongs one click away.
 
 **Decision it changes:** whether to ship a "decision card" (one recommended action) or a "slot board" (all eligible slots). Recommendation: **slot board as the resident screen, decision card as a collapsible header**, because the card alone hides the second-best option and why the engine ranked it — exactly where judgment is needed when several strategies fire on one move (user-supplied context: this happens).
 
@@ -17,11 +17,11 @@
 
 ## 3. Worked example / wireframes
 
-**Scenario (SYNTHETIC):** 09:42 ET. Slots `KX-A` and `PX-B` (names are placeholders; definitions unavailable) both fire **long MNQ** on an NQ signal. Account already **long 1 MES**. Scheduled release: **ISM Services PMI, 10:00 ET → 18 min away** (labeled example; verify the real date against the calendar). Index levels assumed: NQ 25,000 (1% = 250 pt), ES 6,800 (1% = 68 pt). Multipliers (public, verify against CME): MNQ $2/pt, MES $5/pt.
+**Scenario (SYNTHETIC):** 09:42 ET. Slots `KX-A` and `PX-B` (placeholder names; definitions unavailable) both fire **long MNQ** on an NQ signal. Account already **long 1 MES**. Release: **ISM Services PMI, 10:00 ET → 18 min away** (labeled example; verify the date). Assumed levels: NQ 25,000 (1% = 250 pt), ES 6,800 (1% = 68 pt). Multipliers (public, verify against CME): MNQ $2/pt, MES $5/pt.
 
-Exposure arithmetic: existing MES long = $5/pt ES = **$340 per 1% ES move**. Each MNQ long adds $2/pt NQ = **$500 per 1% NQ move**. Taking both slots: +$4/pt, +$1,000/1%; correlated long total ≈ $1,340 per 1% co-move. Taking one: +$2/pt, +$500/1%; total ≈ $840/1%.
+Exposure: existing MES long = $5/pt = **$340 per 1% ES move**. Each MNQ long adds $2/pt = **$500 per 1% NQ move**. Both slots: +$4/pt, +$1,000/1%, correlated total ≈ $1,340 per 1% co-move. One slot: +$2/pt, +$500/1%, total ≈ $840/1%.
 
-Example policy that produces the recommendation (SYNTHETIC, user must replace with own rule): correlated-long cap = $1,000 per 1% co-move; no new entries inside 10 min before a scheduled release; when two slots fire on the same move take the one with the larger logged net expectancy *only if* its evidence status is better than "insufficient".
+Example policy behind the recommendation (SYNTHETIC; user substitutes own rule): correlated-long cap $1,000 per 1% co-move; no new entries within 10 min of a release; when two slots fire together, take the larger logged net expectancy only if its evidence status is not "insufficient".
 
 ### Layout 1 — Decision card
 
@@ -82,7 +82,7 @@ Both layouts give the same answer — take KX-A, skip PX-B — but only the boar
 
 **Main screen vs drill-down.** Main: time, release + minutes, action/qty/instrument, bracket, status word, n and sessions, net $/trade, exposure delta ($/pt and $/1%), correlated-long before/after, account headroom, "changes if", keys. Drill-down only: expectancy interval, condition-bucket breakdown, Study 66 random-entry comparison, Study 71 chop rate under the current break definition, session-ATR percentile, event-VWAP state, fill/slippage history, raw signal log.
 
-**Ten-second scan order (both layouts):** 0–2 s action line (what, qty, instrument); 2–4 s blockers (release clock, account headroom); 4–6 s exposure delta and correlated total after; 6–8 s "changes if" list; 8–10 s key press. On the board, the eye goes header → first ELIGIBLE row → CORR-LONG line → keys.
+**Ten-second scan order:** 0–2 s action line (what, qty, instrument); 2–4 s blockers (release clock, headroom); 4–6 s exposure delta and correlated total after; 6–8 s "changes if"; 8–10 s key press. On the board: header → first ELIGIBLE row → CORR-LONG line → keys.
 
 ## 4. When following this proposal would make the decision worse
 

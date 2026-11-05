@@ -24,7 +24,7 @@ Market-specific assumption: MES and MNQ are not two instruments here. ES and NQ 
 1. *Net directional exposure* at minute t: `D_t = Σ_i q_i · M_i · P_i · β_i` in $ per 1% NQ move, where q = signed contracts, M = $/pt multiplier (MNQ 2, MES 5), P = index level, β = 1 for NQ-based, β_ES|NQ for ES-based. β_ES|NQ = slope of 5-min ES % returns on NQ % returns over the prior 20 sessions, RTH only (excluding the first 5 min after 08:30 and 14:00 ET releases). Report β's standard error; if it drifts, re-estimate per session.
 2. *Correlation-adjusted exposure*: `σ_book = sqrt(wᵀ Σ w)` with Σ the slot P&L covariance from prior sessions; diversification ratio = σ_book / Σσ_i. A slot whose addition leaves the ratio ≈ unchanged while raising D_t is a duplicate.
 3. *Joint stop-out*: pairs (i, j) whose stop fills occur within k = 15 minutes (also report k = 5, 60). Statistic: P(j stopped within k | i stopped) vs unconditional P(j stopped in any k-min window), using session-level block bootstrap for the interval.
-4. *Loss clustering*: per session, count of losing slots among the active set. Compare P(all active lose) and var(count) with the independence values Π p_i and Σ p_i(1−p_i). Note: P(≥2 of 3) is nearly uninformative when p_i ≈ 0.5 (the SYNTHETIC run shows 0.474 vs 0.470 while P(all lose) is 2.1× independence) — use the tail or the variance.
+4. *Loss clustering*: per session, count of losing slots among the active set. Compare P(all active lose) and var(count) with the independence values Π p_i and Σ p_i(1−p_i). P(≥2 of 3) is uninformative when p_i ≈ 0.5 (SYNTHETIC: 0.474 vs 0.470 while P(all lose) is 2.1× independence).
 5. *Marginal contribution*: fix the baseline book B (all currently approved slots, fixed sizes). Define W = the 10% of sessions with the lowest B P&L. For candidate slot S, report mean P&L of (B) and (B+S) on W, on all sessions, and S alone on W. The day set W is frozen before S is examined and is identical for every candidate. Also report the "swap" arm (B − MES + S) so sizing alternatives are visible.
 
 ```
@@ -54,14 +54,14 @@ A trailing-stop tightening is a single control that improves the second metric a
 
 ## 5. Cheapest decisive test, and the result that would retire the idea
 
-Test: from the trade log, reconstruct per-session slot P&L; fix B; compute W; for the second-MNQ-signal slot compute (B+S) − B on W and on W's complement with a session-block bootstrap (1,000 resamples). Retirement result: if the mean of (B+S) − B on W is ≥ 0 (or ≥ −0.3 × S's average absolute daily P&L) with its 90% interval excluding a large negative value, S is *not* a duplicate in the sense that matters and should be taken at full size; the take/skip rule is retired and replaced by a sizing rule. Cost: one afternoon if the log contains the fields in §6.
+Test: from the trade log, reconstruct per-session slot P&L; fix B; compute W; for the second-MNQ-signal slot compute (B+S) − B on W and on W's complement with a session-block bootstrap (1,000 resamples). Retirement result: if mean (B+S) − B on W is ≥ 0 (or ≥ −0.3 × S's mean absolute daily P&L) with a 90% interval excluding a large negative value, S is not a duplicate in the sense that matters; the take/skip rule is retired in favor of a sizing rule. Cost: one afternoon if the log contains the fields in §6.
 
 ## 6. Missing inputs that materially limit the conclusion
 
 - Trade log fields required: slot id, instrument, signed size, entry/exit timestamps to the minute, stop price and whether exit was a stop fill, per-trade MFE/MAE (or minute bars to recompute them), and — critically — **rejected/skipped signals with their hypothetical entry, stop and exit**, else the "skip" arm is unobservable.
-- Minute bars for NQ/ES (or MNQ/MES) over the same sessions, for β and joint-stop windows.
+- Minute bars for NQ/ES over the same sessions, for β and joint-stop windows.
 - The actual approved slot list and sizes that define the baseline book.
-- Index levels and multipliers at trade time (contract roll dates).
+- Index levels at trade time (roll dates).
 
 ## 7. Filter accounting (the seven quantities in rule 3)
 
@@ -75,4 +75,4 @@ Test: from the trade log, reconstruct per-session slot P&L; fix B; compute W; fo
 | Independent sessions | Sessions with ≥1 eligible signal; block-bootstrap by session; report n in W and in its complement |
 | Portfolio contribution | Mean and CVaR10 of (B+S) − B on fixed W and overall; diversification ratio with/without S |
 
-Word count ≈ 1,150.
+Prose word count ≈ 1,190 (excluding the one code block and one table).

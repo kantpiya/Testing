@@ -1,6 +1,6 @@
 # B2 — Heterogeneous effects: does a condition *distinguish* strategies, or just move all of them?
 
-Panel: 2026-11-05. Author: B2 (statistician, heterogeneous effects). Inputs: common brief only; no data, code, logs or study reports exist in the workspace (OBSERVED). Everything about KX/PX/engulfing and Studies 66/71 is USER-SUPPLIED CONTEXT (unverified). Simulation code and output: `/tmp/claude-0/-home-user-Testing/7cf3ca0b-ccdf-5806-aa57-684759b9781e/scratchpad/B2/` (SYNTHETIC).
+B2, 2026-11-05. Inputs: common brief only; no data, code, logs or study reports exist in the workspace (OBSERVED). KX/PX/engulfing and Studies 66/71 are USER-SUPPLIED CONTEXT (unverified). Simulation code and output (SYNTHETIC): `/tmp/claude-0/-home-user-Testing/7cf3ca0b-ccdf-5806-aa57-684759b9781e/scratchpad/B2/`.
 
 ## 1. Strongest finding or proposal, and the decision it would change
 
@@ -8,7 +8,7 @@ Panel: 2026-11-05. Author: B2 (statistician, heterogeneous effects). Inputs: com
 
   y_i = α + Σ_s β_s·Strat_s + Σ_c γ_c·Cond_c + Σ_{s,c} δ_sc·Strat_s·Cond_c + ε_i, SE clustered by trading session.
 
-The decision it changes: **a strategy slot is switched off (or sized differently) in a condition only if the interaction block δ is non-zero and the specific δ_sc is large relative to its clustered SE.** If only γ (condition main effect) is non-zero, the right action is a *portfolio-level* response (size everything down or up in that condition, or skip the condition entirely), not strategy-specific routing. Per-strategy sorting cannot make this distinction; the SYNTHETIC run shows it manufactures a different "winner" per condition 85% of the time when no interaction exists.
+The decision it changes: **a strategy slot is switched off (or resized) in a condition only if the interaction block δ is non-zero and the specific δ_sc is large relative to its clustered SE.** If only γ (condition main effect) is non-zero, the right action is portfolio-level (size everything down or up in that condition, or skip it), not strategy-specific routing. Per-strategy sorting cannot make this distinction; SYNTHETIC: it manufactures a different "winner" per condition 85% of the time when no interaction exists.
 
 ## 2. Evidence (with labels) and the strongest competing explanation
 
@@ -17,7 +17,7 @@ The decision it changes: **a strategy slot is switched off (or sized differently
   - Null interaction: naive per-condition sorting names *different* best strategies across conditions in **84.8%** of replications and names a non-best strategy in ≥1 condition in 88.2%. Cluster-robust Wald test of the δ block rejects at **6.5%** (nominal 5%).
   - True interaction (ENG −0.45R in Calm, +0.60R in Volatile): power **88%**. At half that size (−0.225/+0.30R): power **34%** — so ~250 sessions detect only large interactions.
   - Strong session shocks (SD 0.8R, ~6 trades/strategy/session): iid SEs reject a *true-null condition main effect* **25.7%** of the time vs 7.3% clustered. The interaction block stayed near nominal under iid SEs (5.0%) **because strategies co-traded the same sessions, so the interaction is a within-session contrast and the session shock differences out.** This protection disappears under non-overlapping support (section 3).
-- EXTERNALLY SUPPORTED (general, no page opened): cluster-robust (Liang–Zeger/CR1) inference with G≈250 clusters is adequate; with fewer than ~40 sessions per cell use wild-cluster bootstrap.
+- EXTERNALLY SUPPORTED (general knowledge, no page opened): CR1 cluster-robust inference is adequate at G≈250; below ~40 clusters use a wild-cluster bootstrap.
 
 **Strongest competing explanation for any apparent "strategy × condition" effect: differential opportunity sets.** If KX fires 0.4×/session in Calm and ENG 3×/session, their Calm cells hold different bars, times-of-day and (via session shocks) effectively different sessions; a nonzero δ then reflects *when each strategy chose to fire*, not performance under the same condition. Second competitor: condition defined from the same price path that generates the trade (look-ahead); it must be computable at signal time from a fixed anchor (e.g., session-relative ATR at the bar close before entry).
 
@@ -58,11 +58,11 @@ Fit the fixed-effects model on all executed trades with session-clustered SEs an
 
 ## 6. Missing inputs that materially limit the conclusion
 
-- Whether logs contain rejected/eligible signals (OBSERVED: unknown). Without them only the descriptive, as-fired estimand is available.
-- Condition definition and its information set at signal time; whether it is bar-level or session-level.
-- Number of unique sessions per cell for the actual strategies; the power calculation above suggests ~250 sessions detect only interactions ≳ 0.5R.
-- Cost model (commission + slippage per contract) to put P&L on a net-R scale; interaction conclusions in gross R can flip after costs if strategies differ in trade frequency.
-- Whether strategies share fills on the same move (brief §2): if so, trades are not independent within a session even across strategies — the session cluster handles this; a per-strategy cluster would not.
+- Whether logs contain rejected/eligible signals (OBSERVED: unknown). Without them only the as-fired estimand is available.
+- Condition definition, its information set at signal time, and whether it is bar- or session-level.
+- Unique sessions per cell for the real strategies; ~250 sessions detect only interactions ≳ 0.5R.
+- Cost model (commission + slippage per contract) for net R; gross-R interactions can flip after costs when trade frequency differs by strategy.
+- Whether strategies share fills on the same move (brief §2): the session cluster handles that dependence; a per-strategy cluster would not.
 
 ## 7. Filter accounting (the seven quantities)
 
