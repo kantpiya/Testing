@@ -160,6 +160,17 @@ def main():
         fam = FAMILY.get(name, "KX")
         rows.append(dict(policy=name, family=fam, **metrics(base, res[name], fam)))
     comp = pd.DataFrame(rows); comp.to_csv(os.path.join(out_dir, f"comparison_{a.tag}.csv"), index=False)
+    # per-trade paired results for every policy (for session attribution and charts)
+    per = base[["session", "strategy", "family", "direction", "planned_risk_usd", "net_usd", "net_R", "exit_reason", "minutes_held"]].rename(
+        columns={"net_usd": "P0_net_usd", "net_R": "P0_net_R", "exit_reason": "P0_exit", "minutes_held": "P0_min"})
+    for name in pols:
+        if name == "P0":
+            continue
+        r = res[name].reindex(base.index)
+        per[f"{name}__net_usd"] = r.net_usd; per[f"{name}__net_R"] = r.net_R; per[f"{name}__exit"] = r.exit_reason
+        per[f"{name}__d_usd"] = r.net_usd - base.net_usd
+        if "stall_bar" in r: per[f"{name}__stall_bar"] = r.stall_bar
+    per.to_csv(os.path.join(out_dir, f"per_trade_{a.tag}.csv"))
     lines += ["", "## Stage A comparison table (reference fill model; paired on identical entries; costs on every fill)", "",
               comp.drop(columns=["top5_sessions"]).to_markdown(index=False), ""]
     lines += ["### Five sessions contributing most to each paired difference (session: paired Δ$)", ""]
