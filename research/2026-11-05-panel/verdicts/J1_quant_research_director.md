@@ -1,6 +1,6 @@
 # J1 — Director of Quantitative Research: identification, leakage, multiplicity, sample size, validation design
 
-Inputs: common brief + 15 anonymized reports; no other verdicts read; agreement given no weight. All report numbers are SYNTHETIC; verdicts concern test design. Working sample: ~750 RTH sessions over 3 years (USER-SUPPLIED, unverified).
+Inputs: common brief + 15 anonymized reports; no other verdicts read; agreement given no weight. All report numbers are SYNTHETIC; verdicts concern test design. Working sample: ~750 RTH sessions over 3 years (unverified).
 
 ## Verdict table
 
