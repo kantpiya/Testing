@@ -1,0 +1,21 @@
+
+=== SIGNAL CASE: gamma=0.15, n=10877, sessions=149 ===
+  +direction | cluster-Wald p=0.0000 | in-sample dR2=+0.0032 | OOS R2 base=-0.0024 model=+0.0015 dR2=+0.0039 | smt_dir_signed=+0.000161 (t=+6.65)
+  +magnitude | cluster-Wald p=0.0000 | in-sample dR2=+0.0083 | OOS R2 base=-0.0024 model=+0.0068 dR2=+0.0092 | smt_mag=+0.144 (t=+7.41)
+  +both      | cluster-Wald p=0.0000 | in-sample dR2=+0.0087 | OOS R2 base=-0.0024 model=+0.0071 dR2=+0.0095 | smt_dir_signed=+5.67e-05 (t=+1.81), smt_mag=+0.13 (t=+5.55)
+
+=== NULL CASE: gamma=0.0, n=10877, sessions=149 ===
+  +direction | cluster-Wald p=0.7603 | in-sample dR2=+0.0000 | OOS R2 base=-0.0029 model=-0.0032 dR2=-0.0002 | smt_dir_signed=-8.82e-06 (t=-0.31)
+  +magnitude | cluster-Wald p=0.1730 | in-sample dR2=+0.0003 | OOS R2 base=-0.0029 model=-0.0028 dR2=+0.0001 | smt_mag=+0.0267 (t=+1.36)
+  +both      | cluster-Wald p=0.1718 | in-sample dR2=+0.0005 | OOS R2 base=-0.0029 model=-0.0028 dR2=+0.0001 | smt_dir_signed=-3.92e-05 (t=-1.28), smt_mag=+0.0369 (t=+1.75)
+
+=== MES/MNQ near-duplicate check (ES vs NQ return corr & sign agreement by horizon) ===
+  h=  1 bars: corr=0.883  sign-agree=0.846  var-reduction of long-MNQ/short-beta*MES vs long-MNQ = 0.780
+  h=  5 bars: corr=0.887  sign-agree=0.845  var-reduction of long-MNQ/short-beta*MES vs long-MNQ = 0.786
+  h= 15 bars: corr=0.884  sign-agree=0.853  var-reduction of long-MNQ/short-beta*MES vs long-MNQ = 0.782
+  h= 30 bars: corr=0.881  sign-agree=0.841  var-reduction of long-MNQ/short-beta*MES vs long-MNQ = 0.777
+  h= 60 bars: corr=0.891  sign-agree=0.848  var-reduction of long-MNQ/short-beta*MES vs long-MNQ = 0.794
+
+=== Stale-data check: ES prints older than 30s on 5.0% of bars (synthetic) ===
+  Rule: compute age = bar_close_ts - last_trade_ts per leg; if |age_ES - age_NQ| > 30s or either > 30s,
+  set smt_* = NaN for that bar (do not carry forward the stale leg) and exclude from the fit.

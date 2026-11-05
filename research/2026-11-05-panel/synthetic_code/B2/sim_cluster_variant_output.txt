@@ -1,0 +1,2 @@
+[cond main effect NULL; sess_sd=0.8, ~6 trades/strat/session] condition-main-effect rejection: cluster=0.073 iid=0.257 | interaction(null) rejection: cluster=0.057 iid=0.050
+[cond main effect present; sess_sd=0.8, ~6 trades/strat/session] condition-main-effect rejection: cluster=0.647 iid=0.880 | interaction(null) rejection: cluster=0.040 iid=0.050

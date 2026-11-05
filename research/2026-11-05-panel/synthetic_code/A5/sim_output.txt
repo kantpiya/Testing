@@ -1,0 +1,20 @@
+
+=== SYNTHETIC scenario A: expansion clusters after quiet entries ===
+trades=40000  quiet share=0.416  P(expand|quiet)=0.350  P(expand|not quiet)=0.101  quiet&expand share=0.146
+policy     netPnL$  mean$/tr   sd$/tr  sharpe   maxDD$  avgCtr   win%  loss$ on Q&X  %losses Q&X  Q&X mean$  Q~X mean$
+FIX1        206836      5.17    51.20   0.101     1778    1.00   43.2         73537          9.8       0.89       1.44
+RISK$       422142     10.55   113.81   0.093     4918    3.03   43.2        280635         14.5       2.82       5.41
+CALM2       227616      5.69    59.63   0.095     2604    1.42   43.2        147073         15.5       1.79       2.88
+CALM2+R     357009      8.93    76.16   0.117     2315    1.42   45.3        252649         22.1       9.13      10.88
+per-contract: quiet&no-exp mean $1.44, win 42.8% | quiet&exp mean $0.89, win 41.3% | not-quiet mean $7.97, win 43.9%
+stop-hit rate: quiet&no-exp 55.8%  quiet&exp 58.7%  not-quiet 54.1%
+
+=== SYNTHETIC scenario B: expansion independent of quiet ===
+trades=40000  quiet share=0.416  P(expand|quiet)=0.148  P(expand|not quiet)=0.153  quiet&expand share=0.062
+policy     netPnL$  mean$/tr   sd$/tr  sharpe   maxDD$  avgCtr   win%  loss$ on Q&X  %losses Q&X  Q&X mean$  Q~X mean$
+FIX1        209603      5.24    51.22   0.102     1658    1.00   43.4         31350          4.2       0.49       1.67
+RISK$       434633     10.87   113.73   0.096     4575    3.03   43.4        119873          6.2       1.37       6.15
+CALM2       234526      5.86    59.58   0.098     2311    1.42   43.4         62700          6.6       0.97       3.35
+CALM2+R     362310      9.06    74.46   0.122     2152    1.42   45.8        109904          9.9       5.12      11.64
+per-contract: quiet&no-exp mean $1.67, win 43.1% | quiet&exp mean $0.49, win 40.6% | not-quiet mean $7.91, win 43.8%
+stop-hit rate: quiet&no-exp 55.4%  quiet&exp 59.3%  not-quiet 54.3%

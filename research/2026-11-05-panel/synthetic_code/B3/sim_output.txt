@@ -1,0 +1,18 @@
+=== SYNTHETIC selection simulation: pure noise, 250 days, 200 parameter sets ===
+Preselected rule: mean t=+0.01, P(t>1.96)=0.026  (nominal 0.025)
+Best-of-200     : mean t=+2.75, P(t>1.96)=0.992, median naive p=3.45e-03
+Max-of-200 null 95th pct of t = 3.50  <- honest critical value for a searched result
+Preselected null 95th pct of t = 1.72
+
+One realized search: best params #168 t=3.27, naive p=5.3e-04
+  reality-check p (max-of-N sign-flip null) = 0.127
+  preselected rule #0 t=1.03, naive p=0.15; its pct in max-of-N null = 0.00
+
+=== SYNTHETIC same-bar stop/target: 1-min GBM bars, 1R stop, 1.5R target, 60-bar horizon ===
+ambiguous bars: 0.4% of trades
+mean R/trade  conservative=+0.033  tick-truth=+0.036  optimistic=+0.042
+spread optimistic-conservative = +0.009 R/trade  (a 'edge' of this size is pure fill assumption)
+
+=== SYNTHETIC overlapping labels: 30-bar forward return, signal every bar, 5000 bars ===
+corr(signal,fwd)=+0.009; naive t=+0.65; overlap-adjusted t=+0.12
+noise signals called significant at naive n: 0.04 (nominal 0.05)

@@ -1,0 +1,2 @@
+B1: sessions=500  sessions_with_break=499  breaks=8380  breaks/session=16.76  FT/break=0.026  failed/break=0.464  unresolved/break=0.510  FT/session=0.442
+B2: sessions=500  sessions_with_break=452  breaks=2114  breaks/session=4.23  FT/break=0.112  failed/break=0.259  unresolved/break=0.630  FT/session=0.472

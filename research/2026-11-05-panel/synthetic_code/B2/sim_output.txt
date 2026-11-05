@@ -1,0 +1,61 @@
+
+=== CASE A: condition is a PURE MAIN EFFECT (no interaction): n_trades=1430, sessions=249 ===
+Interaction Wald (cluster-robust, F-approx):  p = 0.2616
+Interaction Wald (iid SE, WRONG):            p = 0.3459
+Coefficient  est  [cluster SE]  [iid SE]
+  const              +0.195   0.284   0.308
+  SPX                -0.272   0.306   0.336
+  SENG               -0.610   0.299   0.328
+  CNormal            -0.052   0.303   0.331
+  CVolatile          +0.313   0.310   0.329
+  SPXxCNormal        +0.408   0.369   0.376
+  SPXxCVolatile      -0.063   0.345   0.385
+  SENGxCNormal       +0.414   0.333   0.368
+  SENGxCVolatile     +0.280   0.362   0.404
+Cell table: (n_trades / n_sessions / mean R)
+  KX  Calm:   30/ 24/+0.20  Normal:  194/ 88/+0.14  Volatile:  216/ 66/+0.51
+  PX  Calm:  156/ 69/-0.08  Normal:  207/ 92/+0.28  Volatile:  128/ 61/+0.17
+  ENG Calm:  227/ 75/-0.42  Normal:  206/ 86/-0.05  Volatile:   66/ 38/+0.18
+Naive 'best strategy per condition': {'Calm': 'KX', 'Normal': 'PX', 'Volatile': 'KX'}
+Shrinkage: tau^2 = 0.0000;  raw cell deviation -> shrunk (weight)
+  KX  +0.16->+0.00 (w=0.00)   -0.24->-0.00 (w=0.00)   +0.12->+0.00 (w=0.00)
+  PX  +0.05->+0.00 (w=0.00)   +0.09->+0.00 (w=0.00)   -0.10->-0.00 (w=0.00)
+  ENG -0.02->-0.00 (w=0.00)   +0.02->+0.00 (w=0.00)   +0.14->+0.00 (w=0.00)
+
+=== CASE B: TRUE interaction (ENG: -0.45R Calm, +0.60R Volatile): n_trades=1408, sessions=247 ===
+Interaction Wald (cluster-robust, F-approx):  p = 0.0035
+Interaction Wald (iid SE, WRONG):            p = 0.0099
+Coefficient  est  [cluster SE]  [iid SE]
+  const              -0.527   0.300   0.333
+  SPX                +0.291   0.325   0.355
+  SENG               -0.347   0.317   0.349
+  CNormal            +0.532   0.329   0.351
+  CVolatile          +0.991   0.317   0.351
+  SPXxCNormal        -0.210   0.367   0.387
+  SPXxCVolatile      -0.522   0.365   0.398
+  SENGxCNormal       +0.445   0.364   0.382
+  SENGxCVolatile     +0.281   0.393   0.419
+Cell table: (n_trades / n_sessions / mean R)
+  KX  Calm:   22/ 20/-0.53  Normal:  195/ 88/+0.00  Volatile:  192/ 64/+0.46
+  PX  Calm:  159/ 67/-0.24  Normal:  227/ 96/+0.09  Volatile:  124/ 56/+0.23
+  ENG Calm:  222/ 72/-0.87  Normal:  207/ 90/+0.10  Volatile:   60/ 44/+0.40
+Naive 'best strategy per condition': {'Calm': 'PX', 'Normal': 'ENG', 'Volatile': 'KX'}
+Shrinkage: tau^2 = 0.0114;  raw cell deviation -> shrunk (weight)
+  KX  -0.04->-0.00 (w=0.10)   -0.05->-0.02 (w=0.39)   -0.00->-0.00 (w=0.49)
+  PX  +0.26->+0.10 (w=0.37)   -0.13->-0.07 (w=0.50)   -0.17->-0.05 (w=0.31)
+  ENG -0.31->-0.12 (w=0.38)   +0.06->+0.03 (w=0.50)   +0.32->+0.08 (w=0.27)
+
+--- Monte Carlo CASE A (null interaction) (400 reps, ~250 sessions each) ---
+Interaction test rejection rate @5%: cluster-robust = 0.065   iid SE = 0.055
+Naive sort claims DIFFERENT best strategies across conditions: 0.848
+Naive sort names a non-best (true main-effect best = PX) strategy in >=1 condition: 0.882
+
+--- Monte Carlo CASE B (true interaction) (400 reps, ~250 sessions each) ---
+Interaction test rejection rate @5%: cluster-robust = 0.882   iid SE = 0.865
+Naive sort claims DIFFERENT best strategies across conditions: 0.993
+Naive sort names a non-best (true main-effect best = PX) strategy in >=1 condition: 0.993
+
+--- Monte Carlo CASE B' (half-size interaction: -0.225/+0.30 R) (400 reps, ~250 sessions each) ---
+Interaction test rejection rate @5%: cluster-robust = 0.335   iid SE = 0.285
+Naive sort claims DIFFERENT best strategies across conditions: 0.953
+Naive sort names a non-best (true main-effect best = PX) strategy in >=1 condition: 0.963

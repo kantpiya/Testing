@@ -1,0 +1,10 @@
+
+=== SYNTHETIC scenario C: clusters after quiet + adverse jump (65% against) at expansion ===
+trades=40000  quiet share=0.416  P(expand|quiet)=0.350  P(expand|not quiet)=0.101  quiet&expand share=0.146
+policy     netPnL$  mean$/tr   sd$/tr  sharpe   maxDD$  avgCtr   win%  loss$ on Q&X  %losses Q&X  Q&X mean$  Q~X mean$
+FIX1        186641      4.67    51.10   0.091     1455    1.00   42.5         78139         10.3      -1.05       1.44
+RISK$       362172      9.05   113.61   0.080     4525    3.03   42.5        298021         15.2      -4.48       5.41
+CALM2       196104      4.90    59.49   0.082     2212    1.42   42.5        156278         16.2      -2.10       2.88
+CALM2+R     293868      7.35    75.95   0.097     2495    1.42   44.4        276421         23.6      -0.18      10.88
+per-contract: quiet&no-exp mean $1.44, win 42.8% | quiet&exp mean $-1.05, win 37.9% | not-quiet mean $7.59, win 43.6%
+stop-hit rate: quiet&no-exp 55.8%  quiet&exp 62.0%  not-quiet 54.4%

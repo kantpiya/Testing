@@ -1,0 +1,24 @@
+== Static exposure ($ per 1% index move) ==
+1 MNQ: $400/1% NQ   1 MES: $275/1% ES  -> NQ-equiv $206
+Baseline book NQ-equiv delta: $606/1%   with slot B: $1006/1%  (+66%)
+
+SYNTHETIC corr(ES,NQ moves)=0.92; corr(A,B)=0.58; corr(A,C)=-0.30
+Diversification ratio (sd(book)/sum sd): base=0.87  +B=0.83  +C=0.56
+
+Loss clustering: marginal P(loss)=[0.48 0.48 0.48]; P(>=2 losing) obs=0.474 vs indep=0.470; P(all 3 lose) obs=0.232 vs indep=0.111 ratio=2.09; var(#losing) obs=1.24 vs indep=0.75
+Joint stop-out: P(B stop | A stop)=0.53 vs P(B stop)=0.24; P(C stop | A stop)=0.10 vs P(C stop)=0.22
+
+Marginal contribution (same fixed worst-10% baseline days):
+baseline       all-day mean=   91.4  worst10% mean=  -350.0  worst10% p5=  -350.0  CVaR10(own)=  -350.0
+baseline+B     all-day mean=  154.6  worst10% mean=  -488.2  worst10% p5=  -550.0  CVaR10(own)=  -541.0
+baseline+C     all-day mean=  137.8  worst10% mean=  -132.1  worst10% p5=  -550.0  CVaR10(own)=  -398.1
+Slot B alone on those days: mean=-138.2; slot C alone: mean=217.9
+
+Pyramiding metric pair (R units):
+ trail d  pyramid  captured-MFE(>=3R)  give-back frac(>=1R->0)  mean R
+     0.5    False                0.16                     0.00    0.28
+     0.5     True                0.15                     0.04    0.24
+     1.0    False                0.35                     0.07    0.70
+     1.0     True                0.31                     0.18    0.58
+     2.0    False                0.72                     0.19    1.45
+     2.0     True                0.67                     0.30    1.35
