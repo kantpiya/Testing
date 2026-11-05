@@ -66,14 +66,14 @@ Fill convention observed: gap fills at the exit-bar open +1 tick adverse (the br
 
 | index | reference model | generator model |
 |---|---|---|
-| trades | 332.00 | 332.00 |
-| exact | 282.00 | 316.00 |
-| time_mismatch | 20.00 | 16.00 |
-| px_mismatch_any | 17.00 | 12.00 |
-| px_mismatch_le_2ticks | 4.00 | 0.00 |
-| reason_mismatch | 13.00 | 12.00 |
-| add_mismatch | 1.00 | 1.00 |
-| net_mismatch | 43.00 | 12.00 |
+| trades | 332 | 332 |
+| exact | 282 | 316 |
+| time_mismatch | 20 | 16 |
+| px_mismatch_any | 17 | 12 |
+| px_mismatch_le_2ticks | 4 | 0 |
+| reason_mismatch | 13 | 12 |
+| add_mismatch | 1 | 1 |
+| net_mismatch | 43 | 12 |
 | sum_actual_minus_replay_usd | 55.48 | -877.52 |
 | sum_abs_diff_usd | 1407.52 | 2320.52 | 
 

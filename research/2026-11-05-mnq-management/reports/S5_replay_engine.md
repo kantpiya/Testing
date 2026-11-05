@@ -4,11 +4,11 @@
 
 ## 1. Strongest finding and the decision it changes
 
-**OBSERVED.** The original policy reconstructed from `strategy_versions.csv` + bars reproduces the journal to the tick for **282/332 trades under a realistic MNQ fill model and 316/332 under the generator's own conventions**. Every remaining difference but one class is explained by a named fill convention (instrument used to price market orders, touch-vs-penetration, bracket not armed in the entry bar, gap-limit fill, one skipped add). The only **unexplained** class is **10 MANUAL exits** at intra-bar prices: journal − replay = **+$160.50 net** (sum of absolute differences $1,282.50, 10 trades, 10 sessions). The engine is therefore fit to run the holdout and Stage B.
+**OBSERVED.** The original policy reconstructed from `strategy_versions.csv` + bars reproduces the journal to the tick for **282/332 trades under a realistic MNQ fill model and 316/332 under the generator's own conventions**. Every other difference but one class is explained by a named fill convention (instrument used to price market orders, touch vs penetration, bracket not armed in the entry bar, gapped-limit fill, one skipped add). The only **unexplained** class is **10 MANUAL exits** at intra-bar prices: journal − replay = **+$160.50 net** (Σ|diff| $1,282.50; 10 trades, 10 sessions). The engine is fit to run the holdout and Stage B.
 
-The decision it changes: **every pre-registered policy must be reported under two stop-trigger conventions (touch and penetration), not one.** In the baseline, 16 exact-touch events on NQ (a level printed exactly at a bar extreme without penetration) resolved 6 fired : 10 did not; two of them (trades 102, 177) decide whether a trade is a 2R winner or a 1R loser and together swing **$1,038 = 6.8 % of the baseline's $15.3k net** (section 3, "stop fires only on penetration"). A 1-minute bar cannot resolve this, and a tightened stop touches levels more often than the original does.
+The decision it changes: **every pre-registered policy must be reported under two stop-trigger conventions (touch and penetration).** In the baseline, 16 exact-touch events on NQ (level printed exactly at a bar extreme, not penetrated) resolved 6 fired : 10 not; two of them (trades 102, 177) decide between a 2R winner and a 1R loser and together swing **$1,038 = 6.8 % of the baseline's $15.3k net**. A 1-minute bar cannot resolve this, and a tightened stop touches levels more often than the original.
 
-**OBSERVED (engine validation, not a recommendation).** A stop-only, no-target, flat-at-15:55 policy earns +1.74R/trade on KX (95 % session-bootstrap CI [1.12, 2.34], 240 trades/240 sessions) and +0.88R on PX. That is the generator's planted post-entry drift (136 EOD exits averaging +6.1R). Any specialist who "finds" that removing the target helps is reading the generator, not a market; on the real export this is exactly the kind of result that must survive Stage B and the fill grid before anyone believes it.
+**OBSERVED (engine validation, not a recommendation).** A stop-only, no-target, flat-at-15:55 policy earns +1.74R/trade on KX (95 % session-bootstrap CI [1.12, 2.34], 240 trades/240 sessions) and +0.88R on PX: the generator's planted post-entry drift (136 EOD exits averaging +6.1R). Whoever "finds" that removing the target helps is reading the generator, not a market.
 
 ## 2. Evidence (labelled) and the strongest competing explanation
 
@@ -26,7 +26,7 @@ Verification checklist, all **OBSERVED** on the synthetic export (full output in
 | Pyramiding rule | Add trigger = raw (unrounded) stop distance on the closed bar's extreme, bars 1–20 after entry, add at the next open, before 12:00, one attempt: 73/73 add times and prices reproduced (73/73 at NQ open + 1 tick); 1 add skipped by the generator because the trade exited in the add bar (trade 224). |
 | Position limit (Stage B) | Reject iff open contracts + planned > 4, no partial sizing; a trade exiting in bar *t* frees its contracts for a signal at bar *t* (optimistic look-ahead, 5 cases). Reproduces the executed flag for 342/346 signals; the 4 differences are downstream of 2 MANUAL exits and 2 exact-touch stops (section 3). |
 
-**Strongest competing explanation** for the "unexplained" MANUAL class: a hidden rule rather than discretion — 8/10 MANUAL exits occur 14–23 minutes after entry, 7/10 while under water (−0.24R to −0.81R by the exit print). **HYPOTHESIS**, untestable here: a 1-minute bar contains the fill price but not the rule that produced it; on the real export the trader must label each MANUAL exit with its reason or the class stays unexplained. For the exact-touch class the competing explanation is that the generator evaluated an unrounded continuous path and rounded the bars afterwards; the engine's `touch`/`penetrate` switch brackets both possibilities.
+**Strongest competing explanation** for the MANUAL class: a hidden rule rather than discretion — 8/10 MANUAL exits occur 14–23 minutes after entry, 7/10 under water (−0.24R to −0.81R at the exit print). **HYPOTHESIS**, untestable on bars; on the real export each MANUAL exit needs a stated reason or the class stays unexplained. For the exact-touch class the competing explanation is a generator that evaluated an unrounded path and rounded the bars afterwards; the `touch`/`penetrate` switch brackets both.
 
 ## 3. Reproducible check (code path + pasted output)
 
@@ -122,7 +122,7 @@ Per-trade mismatch table (reference model; `net_diff` = journal − replay):
 | 332 | 2026-04-20 | KX | LONG | 10:01 | 10:02 | STOP | STOP_GAP | 26750.75 | 26748.00 | 11 | −166.44 | −182.94 | −16.50 | bracket not armed in entry bar |
 | 338 | 2026-04-23 | PX | LONG | 13:39 | 13:23 | STOP | MANUAL | 26482.50 | 26525.75 | −173 | −161.98 | −75.48 | +86.50 | UNEXPLAINED: MANUAL intra-bar |
 
-Fill-level comparison with `fills.csv` (generator model): 810 journal fills, 810 paired on (trade, leg, role); qty, side and commission match 810/810; time 792/810 and price 796/810 (the 18 fills of the 10 MANUAL trades and the 2 exact-touch trades 102/177, plus 2 replay-only fills where 177 added and exited later).
+Fill-level comparison with `fills.csv` (generator model): 810 journal fills, 810 paired on (trade, leg, role); qty, side and commission match 810/810; time 792/810 and price 796/810 — the 12 exit fills of the 10 MANUAL trades and the 6 exact-touch stop exits (4 differ in time only), plus 2 replay-only fills where trade 177 added and exited later.
 
 ### Exact-touch ambiguity and same-bar ordering (SYNTHETIC)
 
@@ -181,18 +181,18 @@ The 4 flag differences under the generator model: signals 35 and 58 (journal tra
 
 ## 4. When following this would make the decision worse
 
-Policies the 1-minute data are **too coarse to distinguish** — the engine will run them but the result is an artefact of a convention, not evidence:
+Policies the 1-minute data are **too coarse to distinguish** — the engine runs them, but the result is a convention, not evidence:
 
-1. **Any two policies whose difference is a stop level touched exactly** (touch vs penetration): 16 events in 332 baseline trades, 6:10 resolution; every tightened stop raises the rate.
-2. **Sub-minute trailing stops** (trail distance < one bar range, ≈ 0.25R here): the fill depends on the intra-bar path; the engine only ratchets at bar opens off closed extremes.
-3. **Stop and target inside one bar** (gap < ~0.4R): ordering parameter decides; 1 case already at a 0.1R trail.
-4. **Same-minute exit-and-re-enter** (stop-and-reverse, re-entry on the next signal in the same bar): the position-limit result depends on whether contracts free in the exit bar (5 look-ahead cases in the export).
-5. **Market exits "at the close" vs "at the next open"**: the engine fills at the next bar's open; a 15:54 close exit and a 15:55 open exit differ by one bar's gap.
-6. **Intra-bar discretionary exits** (the MANUAL class): not reproducible; a policy that is "like what the trader does" cannot be validated.
-7. **Limit fills on a gap** (open beyond the limit): price improvement vs limit price, $52 on one trade here.
-8. **Entry-bar bracket**: whether the stop is live during the remainder of the entry bar changed 2 trades by $26.50.
+1. **Two policies that differ by a stop level touched exactly** (touch vs penetration): 16 events in 332 baseline trades, 6:10 resolution; every tightened stop raises the rate.
+2. **Sub-minute trailing stops** (trail < one bar range ≈ 0.25R): the fill depends on the intra-bar path; the engine ratchets only at bar opens off closed extremes.
+3. **Stop and target inside one bar** (gap < ~0.4R): the ordering parameter decides (1 case at a 0.1R trail).
+4. **Same-minute exit-and-re-enter** (stop-and-reverse, next signal in the exit bar): depends on whether contracts free in the exit bar (5 look-ahead cases in the export).
+5. **Exit "at the close" vs "at the next open"**: the engine fills at the next open; one bar's gap apart.
+6. **Intra-bar discretionary exits** (MANUAL): not reproducible, so "what the trader does" cannot be validated.
+7. **Limit fills on a gap**: price improvement vs limit price ($52 on one trade).
+8. **Entry-bar bracket**: live or not during the rest of the entry bar (2 trades, $26.50).
 
-Following the engine blindly makes the decision worse when a candidate's claimed edge is smaller than its spread across section 8's grid, or when it is driven by EOD holds under the generator's planted drift.
+Following the engine blindly makes the decision worse when a candidate's edge is smaller than its spread across section 8's grid, or when it rests on EOD holds under the generator's planted drift.
 
 ## 5. Cheapest decisive test on the user's real data, and the result that retires the idea
 
@@ -200,11 +200,21 @@ Run `python3 src/S5/reconcile.py data/real` on the export (minutes). The idea "w
 
 ## 6. What the real export must contain for this test (exact fields)
 
-`bars_MNQ_1min.csv` (`ts` = bar open, ISO 8601 with offset, `open, high, low, close, volume`, every RTH session through 15:59); `bars_NQ_1min.csv` optional (basis check); `signals.csv` (`signal_id, strategy, family, signal_instrument, exec_instrument, signal_ts, direction, ref_level, ref_width, planned_stop_dist_pts` unrounded, `planned_target_mult_R, planned_contracts, planned_risk_usd, executed, reject_reason, planned_target_px, planned_stop_px`; **rejected signals included**); `trades.csv` (`trade_id, signal_id, session, strategy, family, direction, entry_ts, entry_px, initial_contracts, added_contracts, add_px, add_ts, initial_stop_px, initial_target_px, planned_risk_usd, exit_ts, exit_px, exit_reason ∈ {STOP, TARGET, STOP_GAP, TIME_EOD, MANUAL}, gross_pnl_usd, commission_usd, net_pnl_usd`; timestamps = bar-open of the fill bar); `fills.csv` (`fill_id, trade_id, leg_id, ts_utc` with seconds if the platform has them, `side, qty, price, order_type, fill_role, exit_reason, commission`; one row per leg); `strategy_versions.csv` (`strategy, family, valid_from, valid_to, signal_instrument, entry, stop, target` with the multiple written as `"k * stop distance"`, `time_exit, pyramiding, sizing`); `costs.csv` (`commission_per_side_usd, point_value_usd, tick, assumed_slippage_ticks_market_and_stop, assumed_slippage_ticks_limit, position_limit_contracts, eod_flat_time`). Plus one free-text `manual_reason` per MANUAL exit. Details and commands: `src/S5/README.md`.
+| file | exact fields | requirement |
+|---|---|---|
+| `bars_MNQ_1min.csv` | `ts, open, high, low, close, volume` | `ts` = bar open, ISO 8601 with offset; every RTH session through 15:59; 0.25 grid |
+| `bars_NQ_1min.csv` | same | optional, for the basis check |
+| `signals.csv` | `signal_id, strategy, family, signal_instrument, exec_instrument, signal_ts, direction, ref_level, ref_width, planned_stop_dist_pts, planned_target_mult_R, planned_contracts, planned_risk_usd, executed, reject_reason, planned_target_px, planned_stop_px` | rejected signals included; stop distance unrounded; `signal_ts` = entry bar open |
+| `trades.csv` | `trade_id, signal_id, session, strategy, family, direction, entry_ts, entry_px, initial_contracts, added_contracts, add_px, add_ts, initial_stop_px, initial_target_px, planned_risk_usd, exit_ts, exit_px, exit_reason, gross_pnl_usd, commission_usd, net_pnl_usd` | timestamps = open of the fill bar; `exit_reason ∈ {STOP, TARGET, STOP_GAP, TIME_EOD, MANUAL}`; add `manual_reason` text per MANUAL exit |
+| `fills.csv` | `fill_id, trade_id, leg_id, ts_utc, side, qty, price, order_type, fill_role, exit_reason, commission` | one row per leg per fill; keep seconds in `ts_utc` if the platform has them |
+| `strategy_versions.csv` | `strategy, family, valid_from, valid_to, signal_instrument, entry, stop, target, time_exit, pyramiding, sizing` | target multiple written as `"k * stop distance"` |
+| `costs.csv` | `commission_per_side_usd, point_value_usd, tick, assumed_slippage_ticks_market_and_stop, assumed_slippage_ticks_limit, position_limit_contracts, eod_flat_time` | one MNQ row |
+
+Commands and loader behaviour: `src/S5/README.md`.
 
 ## 7. Policies and thresholds examined (complete count, including discarded)
 
-Ten management policies, all for engine demonstration, none proposed: original bracket; time exit at minute 30; breakeven (stop to entry) after +0.8R, all legs; breakeven after +0.8R, add leg only (smoke test); stop to +0.3R after +0.8R; trailing 0.5R after +0.8R, 0.25R after +1.0R, 0.25R after +1.5R, 0.5R after +1.5R, 0.1R after +1.0R (the five trails were tried only to find one that produces a same-bar stop/target case; four produced none); no-target hold to 15:55 (validation); no-progress exit at minute 20 below +0.3R, add-leg own stop, structural stop, structural target `or_mid` for all trades, 10-point trail after +0.5R (smoke tests in `README.md`, run once each, not tuned). Ten fill-model variants (section 8). No thresholds were optimised.
+Sixteen policies, all for engine demonstration, none proposed, no threshold tuned: original bracket; time exit at minute 30; breakeven after +0.8R (all legs; add leg only); stop to +0.3R after +0.8R; trails 0.5R@+0.8R, 0.25R@+1.0R, 0.25R@+1.5R, 0.5R@+1.5R, 0.1R@+1.0R (tried only to find a same-bar stop/target case; four produced none); no-target hold to 15:55 (validation); smoke tests run once each: no-progress exit at minute 20 below +0.3R, add-leg own stop, structural stop, structural target `or_mid`, 10-point trail after +0.5R. Ten fill-model variants (section 8).
 
 ## 8. Fill-assumption variants the pre-registered policies must be evaluated under
 
@@ -223,4 +233,4 @@ Original policy, Stage A entries, under each single-change variant of the refere
 | same-bar target_first | 15,314.22 | 0.31 | 167 | 161 | 2 |
 | same-bar stop_first | 15,314.22 | 0.31 | 167 | 161 | 2 |
 
-Required grid for every pre-registered challenger and for the original (report each cell in R and $, with trades and sessions): `slippage_ticks_market/stop/gap ∈ {0, 1, 2}` (Stage B also re-prices entries); `stop_trigger ∈ {touch, penetrate}`; `same_bar_order ∈ {stop_first, target_first}` whenever a policy's stop and target can share a bar (report `worst` as the headline); `bracket_in_entry_bar ∈ {True, False}`; `limit_gap_fill ∈ {open, limit}`; `exit_frees_same_bar ∈ {False, True}` in Stage B. A challenger's advantage over the original must exceed its own range across this grid under the reference model's worst cell, otherwise it is a fill artefact. Commission stays at $0.74/side; a policy that exits legs separately pays it on each exit.
+Required grid for every pre-registered challenger and the original (each cell in R and $, with trades and sessions): `slippage_ticks_market/stop/gap ∈ {0, 1, 2}` (Stage B also re-prices entries); `stop_trigger ∈ {touch, penetrate}`; `same_bar_order ∈ {stop_first, target_first}` whenever a policy's stop and target can share a bar (`worst` is the headline); `bracket_in_entry_bar ∈ {True, False}`; `limit_gap_fill ∈ {open, limit}`; `exit_frees_same_bar ∈ {False, True}` in Stage B. A challenger's advantage must exceed its own range across this grid in the worst cell, otherwise it is a fill artefact. Commission stays $0.74/side on every leg exit.
