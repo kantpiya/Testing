@@ -8,7 +8,7 @@ Convened as research director for a systematic MNQ/MES intraday futures operatio
 1. [Decision brief](synthesis/01_decision_brief.md) — what to use now, what to validate, what to drop, three next actions.
 2. [Market-to-strategy table](synthesis/02_market_to_strategy_table.md)
 3. [Conditional session playbook](synthesis/03_conditional_session_playbook.md)
-4. [Clickable prototype](prototype/decision_support_prototype.html) — open in a browser; sample data only; four scenarios; "why did the decision change" diff.
+4. [Clickable prototype](prototype/decision_support_prototype.html) — open in a browser; sample data only; five scenarios (clean, overlapping, insufficient evidence, account locked, input unavailable); "why did the decision change" diff.
 5. [Ranked experiment backlog](synthesis/05_ranked_experiment_backlog.md)
 
 ## Inputs

@@ -132,7 +132,7 @@ const scenarios = [
   account:{ product:'Funded (sample firm X)', balance:52140, dailyLossLeft:-900, trailDDLeft:-1480, maxContracts:5, openPositions:[] },
   signals:[
     { slot:'KX-continuation v2.3', side:'LONG', inst:'MNQ', size:1, entry:20012.5, stop:19992.5, target:20052.5,
-      ev:{ n:41, mean:+3.1, lo:+0.8, hi:+5.4 }, inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' } },
+      ev:{ n:41, mean:+3.1, lo:+0.8, hi:+5.4 }, requires:['normVol','esNq','eventClock'], inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' } },
   ],
  },
  {
@@ -142,9 +142,9 @@ const scenarios = [
     openPositions:[{ inst:'MES', side:'LONG', size:1, entry:5692.0, unreal:+37.5 }] },
   signals:[
     { slot:'KX-continuation v2.3', side:'LONG', inst:'MNQ', size:1, entry:19985.0, stop:19965.0, target:20025.0,
-      ev:{ n:38, mean:+2.4, lo:+0.3, hi:+4.5 }, inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' } },
+      ev:{ n:38, mean:+2.4, lo:+0.3, hi:+4.5 }, requires:['normVol','esNq','eventClock'], inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' } },
     { slot:'PX-opening-drive v1.1', side:'LONG', inst:'MNQ', size:1, entry:19986.0, stop:19960.0, target:20040.0,
-      ev:{ n:23, mean:-1.9, lo:-4.6, hi:+0.8 }, inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' },
+      ev:{ n:23, mean:-1.9, lo:-4.6, hi:+0.8 }, requires:['normVol','eventClock'], inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' },
       note:'When KX and PX fire within 2 min, historical joint stop-out rate 61% (n=18 sessions) — SAMPLE' },
   ],
  },
@@ -154,8 +154,8 @@ const scenarios = [
   account:{ product:'Evaluation (sample firm Y)', balance:50410, dailyLossLeft:-1800, trailDDLeft:-2100, maxContracts:3, openPositions:[] },
   signals:[
     { slot:'Weak-reversal v0.9 (calm-vol variant, 2 micros)', side:'SHORT', inst:'MNQ', size:2, entry:19940.0, stop:19955.0, target:19910.0,
-      ev:{ n:7, mean:+4.2, lo:-3.1, hi:+11.5 }, inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' },
-      note:'Calm-market 2-micro sizing is a hypothesis under test; the variant has 7 sessions of history — SAMPLE' },
+      ev:{ n:7, mean:+4.2, lo:-3.1, hi:+11.5 }, requires:['normVol','eventClock'], inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' },
+      note:'Calm-market 2-micro sizing is a hypothesis under test (7 sessions). With INSUFFICIENT EVIDENCE the engine executes the pre-registered BASELINE size (1) and logs the variant hypothetically — SAMPLE' },
   ],
  },
  {
@@ -165,9 +165,22 @@ const scenarios = [
     openPositions:[{ inst:'MNQ', side:'SHORT', size:1, entry:19890.0, unreal:-62.0 }] },
   signals:[
     { slot:'Sell-off-recovery v1.4', side:'LONG', inst:'MNQ', size:1, entry:19862.0, stop:19842.0, target:19902.0,
-      ev:{ n:29, mean:+2.7, lo:+0.4, hi:+5.0 }, inputs:{ normVol:'ok', esNq:'stale', eventClock:'ok' } },
+      ev:{ n:29, mean:+2.7, lo:+0.4, hi:+5.0 }, requires:['normVol','eventClock'], inputs:{ normVol:'ok', esNq:'stale', eventClock:'ok' },
+      note:'Does not read ES, so the stale ES feed does not block it; but it is a reversal against the open SHORT and the account is locked — SAMPLE' },
     { slot:'Event-VWAP fade v0.5 (anchor 14:00 statement)', side:'LONG', inst:'MNQ', size:1, entry:19864.0, stop:19840.0, target:19910.0,
-      ev:{ n:12, mean:+1.1, lo:-2.9, hi:+5.1 }, inputs:{ normVol:'ok', esNq:'stale', eventClock:'ok' } },
+      ev:{ n:12, mean:+1.1, lo:-2.9, hi:+5.1 }, requires:['normVol','esNq','eventClock'], inputs:{ normVol:'ok', esNq:'stale', eventClock:'ok' } },
+  ],
+ },
+ {
+  id:'unavail-only', name:'5 · Input unavailable (account open)', time:'10:48:30 ET', date:'2026-11-05 (sample)',
+  condition:{ label:'Acceptance below IB low; ES feed stale 41 s', inputs:{ normVol:1.1, ibBreak:'accepted below IB low', esNq:'STALE (last ES print 10:47:49)', nextEvent:'none ≤ 60 min' } },
+  account:{ product:'Funded (sample firm X)', balance:51900, dailyLossLeft:-820, trailDDLeft:-1400, maxContracts:5, openPositions:[] },
+  signals:[
+    { slot:'SMT-divergence short v0.3', side:'SHORT', inst:'MNQ', size:1, entry:19930.0, stop:19950.0, target:19890.0,
+      ev:{ n:34, mean:+2.0, lo:+0.2, hi:+3.8 }, requires:['normVol','esNq','eventClock'], inputs:{ normVol:'ok', esNq:'stale', eventClock:'ok' },
+      note:'Requires ES; evidence would be FAVORABLE but the input is stale → cannot evaluate. Not "unfavorable". — SAMPLE' },
+    { slot:'KX-continuation v2.3', side:'SHORT', inst:'MNQ', size:1, entry:19931.0, stop:19951.0, target:19891.0,
+      ev:{ n:41, mean:+3.1, lo:+0.8, hi:+5.4 }, requires:['normVol','eventClock'], inputs:{ normVol:'ok', esNq:'stale', eventClock:'ok' } },
   ],
  },
 ];
@@ -206,39 +219,52 @@ function decide(sc){
   const openContracts = acct.openPositions.reduce((a,p)=>a+p.size,0);
   const rows = []; let cumulative = 0; let cumContracts = openContracts;
   const base = perOnePct(acct.openPositions);
-  // rank: FAVORABLE first by mean; then INSUFFICIENT; then unfavorable; unavailable/blocked never trade
+  // Account lock FIRST (J3): headroom counts unrealized P&L (firm rules that count open P&L — sample rule)
+  const unreal = acct.openPositions.reduce((a,p)=>a+(p.unreal||0),0);
+  const headroom = Math.abs(acct.dailyLossLeft) + Math.min(0, unreal);
+  const locked = headroom <= 0;
   const ranked = sc.signals.map(s=>{
     let state = evidenceState(s.ev);
     const reasons = [];
-    if (Object.values(s.inputs).some(v=>v!=='ok')){ state='INPUT UNAVAILABLE'; reasons.push('required input stale/missing: ' + Object.entries(s.inputs).filter(([k,v])=>v!=='ok').map(([k,v])=>k+'='+v).join(', ')); }
+    const req = s.requires || Object.keys(s.inputs);
+    const bad = req.filter(k=>s.inputs[k]!=='ok');
+    if (locked){ state='ACCOUNT LIMIT REACHED'; reasons.push(`daily-loss headroom $${headroom.toFixed(0)} after counting unrealized ${money(unreal)} — account LOCKED by rule, not by evidence`); }
+    else if (bad.length){ state='INPUT UNAVAILABLE'; reasons.push('required input stale/missing: ' + bad.map(k=>k+'='+s.inputs[k]).join(', ')); }
     return { s, state, reasons };
   });
-  const order = { 'FAVORABLE':0, 'INSUFFICIENT EVIDENCE':1, 'HISTORICALLY UNFAVORABLE':2, 'INPUT UNAVAILABLE':3 };
+  const order = { 'FAVORABLE':0, 'INSUFFICIENT EVIDENCE':1, 'HISTORICALLY UNFAVORABLE':2, 'INPUT UNAVAILABLE':3, 'ACCOUNT LIMIT REACHED':4 };
   ranked.sort((a,b)=> (order[a.state]-order[b.state]) || (b.s.ev.mean - a.s.ev.mean));
   for (const r of ranked){
-    const s = r.s; const risk = riskDollars(s);
+    const s = r.s;
+    // INSUFFICIENT EVIDENCE executes the pre-registered baseline size, never the untested variant size (J3)
+    const execSize = (r.state === 'INSUFFICIENT EVIDENCE') ? 1 : s.size;
+    const risk = Math.abs(s.entry - s.stop) * MULT[s.inst] * execSize;
     let action = 'SKIP';
     if (r.state === 'FAVORABLE') action = 'TAKE';
-    if (r.state === 'INSUFFICIENT EVIDENCE') { action = 'TAKE (baseline size, research flag)'; r.reasons.push('evidence does not justify deviating from the pre-registered baseline either way; take at baseline size and log'); }
+    if (r.state === 'INSUFFICIENT EVIDENCE') { action = 'TAKE (baseline size 1, research flag)'; r.reasons.push(`n=${s.ev.n} < ${N_MIN} or CI straddles 0: no basis to deviate from baseline either way${s.size!==1?`; variant size ${s.size} logged hypothetically, NOT executed`:''}`); }
     if (r.state === 'HISTORICALLY UNFAVORABLE') r.reasons.push(`n=${s.ev.n} sessions, mean ${fmt(s.ev.mean)} R-ticks, 90% CI [${fmt(s.ev.lo)}, ${fmt(s.ev.hi)}] after costs`);
     if (r.state === 'INPUT UNAVAILABLE') action = 'SKIP (cannot evaluate)';
+    if (r.state === 'ACCOUNT LIMIT REACHED') action = 'LOCKED';
+    // reversal against an open position is an exit-rule question, not a new entry (J3)
+    const opposite = acct.openPositions.filter(p=>p.side!==s.side && p.inst===s.inst);
+    if (action.startsWith('TAKE') && opposite.length){ action='SKIP (reversal against open ' + opposite[0].side + ' — handled by that position\'s exit rule, not a new entry)'; }
     // account gates, applied only to actions that would trade
     if (action.startsWith('TAKE')){
-      if (cumContracts + s.size > acct.maxContracts){ r.state='ACCOUNT LIMIT REACHED'; action='BLOCKED'; r.reasons.push(`max contracts ${acct.maxContracts}: open ${cumContracts} + ${s.size}`); }
-      else if (risk > Math.abs(acct.dailyLossLeft) - cumulative){ r.state='ACCOUNT LIMIT REACHED'; action='BLOCKED'; r.reasons.push(`stop risk $${risk.toFixed(0)} > daily loss remaining $${(Math.abs(acct.dailyLossLeft)-cumulative).toFixed(0)}`); }
+      if (cumContracts + execSize > acct.maxContracts){ r.state='ACCOUNT LIMIT REACHED'; action='BLOCKED'; r.reasons.push(`max contracts ${acct.maxContracts}: open ${cumContracts} + ${execSize}`); }
+      else if (risk > headroom - cumulative){ r.state='ACCOUNT LIMIT REACHED'; action='BLOCKED'; r.reasons.push(`stop risk $${risk.toFixed(0)} > daily-loss headroom $${(headroom-cumulative).toFixed(0)} (incl. unrealized)`); }
       else if (risk > Math.abs(acct.trailDDLeft) - cumulative){ r.state='ACCOUNT LIMIT REACHED'; action='BLOCKED'; r.reasons.push(`stop risk $${risk.toFixed(0)} > trailing drawdown remaining`); }
     }
-    // duplicate-exposure check: a second MNQ same-side signal within the same minute
-    const already = acct.openPositions.concat(rows.filter(x=>x.action.startsWith('TAKE')).map(x=>({inst:x.s.inst,side:x.s.side,size:x.s.size})));
+    // duplicate-exposure check: a second same-side signal while same-direction exposure is open
+    const already = acct.openPositions.concat(rows.filter(x=>x.action.startsWith('TAKE')).map(x=>({inst:x.s.inst,side:x.s.side,size:x.execSize})));
     const sameDir = already.filter(p=>p.side===s.side).length;
     if (action.startsWith('TAKE') && sameDir>0){ r.reasons.push(`adds to ${sameDir} existing same-direction position(s) — exposure, not diversification`); if (r.state==='INSUFFICIENT EVIDENCE'){ action='SKIP (duplicate exposure, no evidence it adds value)'; } }
-    if (action.startsWith('TAKE')){ cumulative += risk; cumContracts += s.size; }
-    const after = perOnePct(already.concat(action.startsWith('TAKE')?[{inst:s.inst,side:s.side,size:s.size}]:[]));
-    rows.push({ s, state:r.state, action, reasons:r.reasons, risk, deltaPct: after - perOnePct(already) });
+    if (action.startsWith('TAKE')){ cumulative += risk; cumContracts += execSize; }
+    const after = perOnePct(already.concat(action.startsWith('TAKE')?[{inst:s.inst,side:s.side,size:execSize}]:[]));
+    rows.push({ s, execSize, state:r.state, action, reasons:r.reasons, risk, deltaPct: after - perOnePct(already) });
   }
   const taken = rows.filter(r=>r.action.startsWith('TAKE'));
-  const headline = taken.length ? `TAKE ${taken.map(r=>r.s.slot.split(' ')[0]).join(' + ')}` : 'NO NEW TRADE';
-  return { rows, headline, base, baseContracts: openContracts };
+  const headline = locked ? 'ACCOUNT LOCKED — NO NEW ENTRIES' : taken.length ? `TAKE ${taken.map(r=>`${r.s.side} ${r.execSize} ${r.s.inst} ${r.s.slot.split(' ')[0]} @ ${r.s.entry} (stop ${r.s.stop})`).join(' + ')}` : 'NO NEW TRADE';
+  return { rows, headline, base, baseContracts: openContracts, locked, headroom };
 }
 function fmt(x){ return (x>0?'+':'') + x.toFixed(1); }
 function money(x){ return (x<0?'−':'+') + '$' + Math.abs(x).toFixed(0); }
@@ -256,6 +282,7 @@ function render(i){
   const changers = whatWouldChange(sc, d);
   document.getElementById('decision').innerHTML = `
     <div class="kv"><b>Time</b><span>${sc.time} · ${sc.date}</span><b>Condition</b><span>${sc.condition.label}</span></div>
+    ${d.locked?`<div class="pill st-limit" style="display:block;text-align:center;font-size:14px;margin:6px 0">🔒 ACCOUNT LIMIT REACHED — routing locked; headroom $${d.headroom.toFixed(0)} incl. unrealized. This is a rule, not evidence about any setup.</div>`:''}
     <div class="big">${d.headline}</div>
     <div class="action">${d.rows.map(r=>`<span class="pill ${stateClass(r.state)}">${r.s.slot.split(' ')[0]}: ${r.state}</span>`).join('')}</div>
     <div class="kv" style="margin-top:8px">
@@ -280,7 +307,7 @@ function render(i){
     <tr><th>Slot / version</th><th>Side · inst · size</th><th>Entry / stop / target</th><th class="num">Stop risk $</th><th>Evidence (n, mean, 90% CI)</th><th>State</th><th>Action</th><th class="num">Δ$ per +1%</th></tr>
     ${d.rows.map(r=>`<tr class="${r.action.startsWith('TAKE')?'':'row-blocked'}">
       <td>${r.s.slot}${r.s.note?`<div class="small muted">${r.s.note}</div>`:''}</td>
-      <td>${r.s.side} · ${r.s.inst} · ${r.s.size}</td>
+      <td>${r.s.side} · ${r.s.inst} · ${r.execSize}${r.execSize!==r.s.size?` <span class="small muted">(variant asked ${r.s.size})</span>`:''}</td>
       <td class="num">${r.s.entry} / ${r.s.stop} / ${r.s.target}</td>
       <td class="num">${r.risk.toFixed(0)}</td>
       <td class="num">n=${r.s.ev.n}, ${fmt(r.s.ev.mean)} [${fmt(r.s.ev.lo)}, ${fmt(r.s.ev.hi)}]</td>
