@@ -1,0 +1,45 @@
+ALL NUMBERS SYNTHETIC -- development set /home/user/Testing/research/2026-11-05-mnq-management/src/reviewerB/../../data/synthetic
+
+== A. integer-lot facts ==
+KX: n=240 initial_contracts dist={1: 56, 2: 70, 3: 64, 4: 50}  one-lot share=0.23  with add=73  mean 1R=$152
+PX: n=92 initial_contracts dist={1: 72, 2: 14, 4: 6}  one-lot share=0.78  with add=0  mean 1R=$152
+KX trades at 4 contracts (can never add): 50
+
+== B. C1: triggers n=60 trades / 60 sessions ==
+  paired d$ (dev year) = -3,399   dR per triggered trade = -0.346   changed trades = 53
+  P0 exit reasons on triggered set: {'STOP': 31, 'TARGET': 29}
+  C1 exit reasons on triggered set: {'STOP': 40, 'STOP_GAP': 13, 'TARGET': 7}
+  BE level already through the market at the placement bar open (modify rejected -> market): 13
+  BE stop hit in its first live bar: 34
+  BE stop exits that were EXACT touches (no penetration): 3
+  single-bar triggers (same bar touched +0.8R and closed <= +0.3R): 2
+  trigger minute after entry: median 10 IQR 5-16; trigger time of day: min 10:05 max 12:50
+  touch-vs-penetrate swing: C1 net $9,184 (touch) vs $9,355 (penetrate); P0 $12,583 vs $13,099; paired d$ under penetrate = -3,744
+  paired d$ at 3-tick slippage: -3,471
+  max DD of cumulative KX net: P0 $-1,994 -> C1 $-3,179; worst trade P0 $-392 -> $-224; P(R<-0.5) on triggered set 0.52 -> 0.18
+
+== B. C2: triggers n=61 trades / 61 sessions ==
+  paired d$ (dev year) = +107   dR per triggered trade = +0.033   changed trades = 18
+  P0 exit reasons on triggered set: {'TARGET': 48, 'STOP': 13}
+  C2 exit reasons on triggered set: {'TARGET': 43, 'STOP': 18}
+  BE level already through the market at the placement bar open (modify rejected -> market): 0
+  BE stop hit in its first live bar: 0
+  BE stop exits that were EXACT touches (no penetration): 1
+  trigger minute after entry: median 20 IQR 20-20; trigger time of day: min 10:21 max 11:39
+  touch-vs-penetrate swing: C2 net $12,690 (touch) vs $13,206 (penetrate); P0 $12,583 vs $13,099; paired d$ under penetrate = +107
+  paired d$ at 3-tick slippage: +90
+  max DD of cumulative KX net: P0 $-1,994 -> C2 $-1,823; worst trade P0 $-392 -> $-341; P(R<-0.5) on triggered set 0.21 -> 0.07
+
+== C. C3 add-leg stop at entry: add trades n=73 / 73 sessions ==
+  paired d$ (dev year) = -320  changed = 19  add-stop hits = 19  of which EXACT touches = 1  hit inside the add fill bar = 0
+  paired d$ under penetrate = -320
+  max DD KX: P0 $-1,994 -> C3 $-1,936; worst trade $-392 -> $-272
+
+== D. C4 PX far target: n=92 / 92 sessions ==
+  paired d$ (dev year) = +5,514  dR/entry = +0.399  changed = 64
+  exit reasons P0 {'TARGET': 64, 'STOP': 24, 'TIME_EOD': 4}  C4 {'TARGET': 58, 'STOP': 27, 'TIME_EOD': 7}
+  far-target exits that were EXACT touches (limit may not fill): 1  (P0 midpoint exact touches: 2)
+  limit-needs-penetration: C4 $8,138 vs P0 $2,624; paired d$ = +5,514
+  mean hold min: P0 28 -> C4 50; C4 holds > 60 min: 23
+  Stage B: later same-session signals arriving inside the C4 extension: 0; blocked by the 4-contract limit: 0 []; journal net of blocked executed trades = $0
+  journal: PX signals rejected for the limit = 14, all rejected = 14

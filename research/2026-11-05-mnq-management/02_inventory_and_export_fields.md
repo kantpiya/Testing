@@ -95,4 +95,4 @@ Items the replay must **assume** if not exported (each is a parameter in `src/S5
 
 ## 4. Minimum sample for the decision
 
-The panel's power calculations (reports S1, S6) are on synthetic data, but the arithmetic transfers: to distinguish a policy difference of 0.10R per trade with a per-trade SD of ~1.5R at 80% power and session-clustered errors you need roughly 400–600 paired trades per family, i.e. on the order of 300+ sessions in which that family fired. Export everything you have, including the earliest versions, and let the replay decide what is comparable.
+The panel's sample-size arithmetic (reports S2, S6 and the holdout result in `synthesis/02_comparison_table.md`) is on synthetic data, but the arithmetic transfers: to distinguish a policy difference of 0.10R per trade with a per-trade SD of ~1.5R at 80% power and session-clustered errors you need roughly 400–600 paired trades per family, i.e. on the order of 300+ sessions in which that family fired. Export everything you have, including the earliest versions, and let the replay decide what is comparable.
