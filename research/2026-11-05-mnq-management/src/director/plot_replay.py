@@ -55,12 +55,14 @@ def plot_trade(tr, bars, events, out, title, policy_exits=None, window=(-10, 75)
     ax2.plot(minutes, open_r, color="#333", lw=1.2, label="open profit at close (R)")
     for lvl, col in [(0, "#1f77b4"), (0.3, "#9467bd"), (0.8, "#8c564b"), (-1, "#d62728")]:
         ax2.axhline(lvl, color=col, ls=":", lw=0.9)
-    for label, ets, col in events:
+    y_top, y_bot = hi_r.max(), lo_r.min()
+    step = (y_top - y_bot) * 0.11
+    for k, (label, ets, col) in enumerate(events):
         m = (pd.Timestamp(ets) - entry_ts).total_seconds() / 60
         for ax in (ax1, ax2):
             ax.axvline(m, color=col, lw=1.2, alpha=0.9)
-        ax2.annotate(label, xy=(m, ax2.get_ylim()[1] if False else open_r.max()), xytext=(m + 1, open_r.max()),
-                     fontsize=8, color=col, va="top")
+        ax2.annotate(f"{k + 1}. {label}", xy=(m, y_top - k * step), xytext=(m + 0.8, y_top - k * step),
+                     fontsize=8, color=col, va="top", bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.8))
     ax2.set_xlabel("minutes since entry fill")
     ax2.set_ylabel("open profit (R, initial leg)")
     ax2.legend(loc="lower left", fontsize=8)
