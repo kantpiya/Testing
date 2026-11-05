@@ -192,32 +192,49 @@ def section_same_bar(d: R.Data):
           f"{int((amb_df.instrument=='NQ').sum())} events of which the exit fired on the touch in {int(amb_df[amb_df.instrument=='NQ'].fired_on_touch.sum())}. "
           f"A 1-minute bar cannot say whether a level printed exactly at its extreme was traded through.\n")
     print(R.md_table(amb_df[amb_df.instrument == "NQ"], index=False), "\n")
-    # tightened-stop policy under the orderings
-    pol = R.Policy("trail_0.5R_after_0.8R", [R.TrailingStop(trail_R=0.5, activate_R=0.8)], R.KXAddRule(),
-                   "KX add as original; once closed-bar extreme >= +0.8R, stop trails 0.5R behind the best closed extreme")
+    # bar range relative to R: how close stop and target must be for one bar to span both
+    rng = []
+    for e in ents:
+        b = R.trade_bars(d, "MNQ", e.session, e.entry_time).iloc[:60]
+        rng.append(((b.high - b.low) / e.stop_dist_pts).median())
+    print(f"- Median 1-min bar range in the first 60 minutes after entry, in units of the stop distance: "
+          f"{np.median(rng):.2f}R (90th pct of trade medians {np.percentile(rng, 90):.2f}R). Stop and target must be closer than "
+          f"about one bar range for same-bar ambiguity to arise.\n")
+    # tightened-stop policies under the orderings
+    pols = [R.Policy("stop_to_+0.3R_after_+0.8R", [R.BreakevenStop(0.8, offset_R=0.3)], R.KXAddRule(),
+                     "the brief's scenario: once closed-bar extreme >= +0.8R, stop to entry +0.3R (all legs)"),
+            R.Policy("trail_0.1R_after_1.0R", [R.TrailingStop(trail_R=0.1, activate_R=1.0)], R.KXAddRule(),
+                     "very tight trail chosen to force stop and target into one bar")]
     out = []
-    for order in ("stop_first", "target_first", "worst", "ohlc"):
-        fmo = R.FillModel.reference(same_bar_order=order)
-        rs = [R.simulate_trade(e, d, pol, fmo) for e in ents]
-        df = pd.DataFrame([r.row() for r in rs])
-        out.append(dict(ordering=order, trades=len(df), sessions=df.session.nunique(), net_usd_sum=round(df.net_usd.sum(), 2),
-                        net_R_mean=round(df.net_R.mean(), 4), ambiguous_exit_bars=int(df.exit_bar_ambiguous.sum()),
-                        bars_both_touched=int(df.both_touched_bars.sum())))
-    print(f"Tightened-stop policy `{pol.name}` ({pol.description}) under each same-bar ordering, reference model otherwise:\n")
+    for pol in pols:
+        for order in ("stop_first", "target_first", "worst", "ohlc"):
+            fmo = R.FillModel.reference(same_bar_order=order)
+            df = pd.DataFrame([R.simulate_trade(e, d, pol, fmo).row() for e in ents])
+            out.append(dict(policy=pol.name, ordering=order, trades=len(df), sessions=df.session.nunique(),
+                            net_usd_sum=round(df.net_usd.sum(), 2), net_R_mean=round(df.net_R.mean(), 4),
+                            ambiguous_exit_bars=int(df.exit_bar_ambiguous.sum()), bars_both_touched=int(df.both_touched_bars.sum())))
+    print("Tightened-stop policies under each same-bar ordering (reference model otherwise; costs included):\n")
     print(R.md_table(pd.DataFrame(out), index=False), "\n")
-    print("`worst` equals `stop_first` whenever the live stop is below the target (always, for a long); it differs only for "
-          "policies that place an exit order on the favourable side of another. `ohlc` assumes the bar moved toward its close last.\n")
+    print("`worst` equals `stop_first` whenever the live stop is on the adverse side of the target (always for a plain bracket); "
+          "`ohlc` assumes the bar moved toward its close last. Same-bar ambiguity is rare on this synthetic path because bars are "
+          "small relative to R; the exact-touch ambiguity above is the binding limitation.\n")
 
 
 def section_stage_a(d: R.Data, out_dir: str):
     print("## 4. Stage A demonstration: identical entries, paired (SYNTHETIC, costs included, reference fill model)\n")
     pols = [R.OriginalBracket("original"),
             R.Policy("time_exit_30", [R.TimeExit(30)], R.KXAddRule(), "exit all at the open of minute 30 after entry (bracket live until then)"),
-            R.Policy("breakeven_0.8R", [R.BreakevenStop(0.8)], R.KXAddRule(), "after a closed bar's extreme >= +0.8R, stop to entry (all legs)")]
+            R.Policy("breakeven_0.8R", [R.BreakevenStop(0.8)], R.KXAddRule(), "after a closed bar's extreme >= +0.8R, stop to entry (all legs)"),
+            R.Policy("no_target_hold_eod", [R.StructuralTarget(None)], R.KXAddRule(), "ENGINE VALIDATION ONLY: original stop, no target, flat 15:55")]
     fm = R.FillModel.reference()
     long, paired = R.run_stage_a(d, pols, fm)
     long.to_csv(os.path.join(out_dir, "stage_a_long.csv"), index=False)
     paired.to_csv(os.path.join(out_dir, "stage_a_paired.csv"))
+    ents = {e.trade_id: e for e in R.entries_from_trades(d)}
+    pxR = pd.Series({t: e.px_to_R(e.target_px) for t, e in ents.items() if e.family == "PX"})
+    print(f"PX structural targets in R (1R = planned risk): median {pxR.median():.2f}, IQR [{pxR.quantile(.25):.2f}, {pxR.quantile(.75):.2f}], "
+          f"{int((pxR < 0.8).sum())}/{len(pxR)} below +0.8R, so a +0.8R breakeven can only arm on {int((pxR >= 0.8).sum())} PX trades. "
+          f"KX targets are 2.0R (v1) / 2.5R (v2) by construction.\n")
     for fam in ("KX", "PX"):
         sub = long[long.family == fam]
         print(f"### {fam}: per-policy summary (trades = {sub[sub.policy=='original'].shape[0]}, sessions = {sub.session.nunique()})\n")
@@ -240,13 +257,23 @@ def section_stage_a(d: R.Data, out_dir: str):
 
 def section_stage_b(d: R.Data, out_dir: str):
     print("## 5. Stage B demonstration: chronological replay from signals.csv (SYNTHETIC)\n")
-    sg = d.signals.set_index("signal_id")
     rows = []
     for fmname, fm, frees in (("generator", R.FillModel.generator(), True), ("reference", R.FillModel.reference(), False)):
         res, lg = R.run_stage_b(d, R.OriginalBracket(), fm, exit_frees_same_bar=frees)
         res.to_csv(os.path.join(out_dir, f"stage_b_original_{fmname}.csv"), index=False)
         lg.to_csv(os.path.join(out_dir, f"stage_b_signal_log_{fmname}.csv"), index=False)
         agree = int((lg.executed == lg.executed_in_export).sum())
+        if fmname == "generator":
+            dis = lg[lg.executed != lg.executed_in_export]
+            expl = []
+            for s in dis.itertuples():
+                rr = res[(res.session == s.session) & (res.entry_time < s.signal_t) & (res.exit_time > s.signal_t)]
+                jj = d.trades[(d.trades.session == s.session) & (d.trades.entry_t < s.signal_t)]
+                expl.append(dict(signal_id=s.signal_id, session=s.session, signal_t=s.signal_t.strftime("%H:%M"),
+                                 executed_in_export=s.executed_in_export, replay_executed=s.executed,
+                                 blocking_replay_trade_exit=", ".join(f"{r.exit_time.strftime('%H:%M')} {r.exit_reason}" for r in rr.itertuples()),
+                                 journal_exit_of_that_trade=", ".join(f"{r.exit_t.strftime('%H:%M')} {r.exit_reason}" for r in jj.itertuples())))
+            dis_df = pd.DataFrame(expl)
         rows.append(dict(policy="original", fill_model=fmname, exit_frees_same_bar=frees, signals=len(lg), executed=int(lg.executed.sum()),
                          rejected=int((~lg.executed).sum()), executed_flag_agrees_with_export=f"{agree}/{len(lg)}",
                          net_usd_sum=round(res.net_usd.sum(), 2), journal_net_usd_sum=round(d.trades.net_pnl_usd.sum(), 2),
@@ -259,6 +286,9 @@ def section_stage_b(d: R.Data, out_dir: str):
                          net_usd_sum=round(res.net_usd.sum(), 2), journal_net_usd_sum=round(d.trades.net_pnl_usd.sum(), 2),
                          sessions=res.session.nunique()))
     print(R.md_table(pd.DataFrame(rows), index=False), "\n")
+    print("Signals whose executed flag differs from the export under the generator model (each is downstream of an exit the replay "
+          "cannot reproduce: a MANUAL exit or an exact-touch stop that fired in the journal):\n")
+    print(R.md_table(dis_df, index=False), "\n")
     print("Stage B entries are re-priced from the bars (open +1 tick), so even the original policy differs from the journal by the "
           "MANUAL exits and the fill conventions listed in section 2; the executed/rejected set is the check that the position-limit "
           "logic is right. Longer holds (`hold_to_eod_no_target`) change which later signals are blocked.\n")

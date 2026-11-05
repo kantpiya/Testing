@@ -185,48 +185,60 @@ UNEXPLAINED: 10 trades, sum(actual - replay) = $160.5, sum|diff| = $1282.5
 | 256 | NQ | STOP | 10:09 | 10:11 | 10:11 | False |
 | 305 | NQ | TARGET | 10:23 | 10:24 | 10:24 | False | 
 
-Tightened-stop policy `trail_0.5R_after_0.8R` (KX add as original; once closed-bar extreme >= +0.8R, stop trails 0.5R behind the best closed extreme) under each same-bar ordering, reference model otherwise:
+- Median 1-min bar range in the first 60 minutes after entry, in units of the stop distance: 0.25R (90th pct of trade medians 0.40R). Stop and target must be closer than about one bar range for same-bar ambiguity to arise.
 
-| ordering | trades | sessions | net_usd_sum | net_R_mean | ambiguous_exit_bars | bars_both_touched |
-|---|---|---|---|---|---|---|
-| stop_first | 332 | 242 | 5390.44 | 0.10 | 0 | 0 |
-| target_first | 332 | 242 | 5390.44 | 0.10 | 0 | 0 |
-| worst | 332 | 242 | 5390.44 | 0.10 | 0 | 0 |
-| ohlc | 332 | 242 | 5390.44 | 0.10 | 0 | 0 | 
+Tightened-stop policies under each same-bar ordering (reference model otherwise; costs included):
 
-`worst` equals `stop_first` whenever the live stop is below the target (always, for a long); it differs only for policies that place an exit order on the favourable side of another. `ohlc` assumes the bar moved toward its close last.
+| policy | ordering | trades | sessions | net_usd_sum | net_R_mean | ambiguous_exit_bars | bars_both_touched |
+|---|---|---|---|---|---|---|---|
+| stop_to_+0.3R_after_+0.8R | stop_first | 332 | 242 | 10716.98 | 0.21 | 0 | 0 |
+| stop_to_+0.3R_after_+0.8R | target_first | 332 | 242 | 10716.98 | 0.21 | 0 | 0 |
+| stop_to_+0.3R_after_+0.8R | worst | 332 | 242 | 10716.98 | 0.21 | 0 | 0 |
+| stop_to_+0.3R_after_+0.8R | ohlc | 332 | 242 | 10716.98 | 0.21 | 0 | 0 |
+| trail_0.1R_after_1.0R | stop_first | 332 | 242 | 3055.20 | 0.06 | 1 | 1 |
+| trail_0.1R_after_1.0R | target_first | 332 | 242 | 3077.70 | 0.06 | 1 | 1 |
+| trail_0.1R_after_1.0R | worst | 332 | 242 | 3055.20 | 0.06 | 1 | 1 |
+| trail_0.1R_after_1.0R | ohlc | 332 | 242 | 3077.70 | 0.06 | 1 | 1 | 
+
+`worst` equals `stop_first` whenever the live stop is on the adverse side of the target (always for a plain bracket); `ohlc` assumes the bar moved toward its close last. Same-bar ambiguity is rare on this synthetic path because bars are small relative to R; the exact-touch ambiguity above is the binding limitation.
 
 ## 4. Stage A demonstration: identical entries, paired (SYNTHETIC, costs included, reference fill model)
 
+PX structural targets in R (1R = planned risk): median 0.70, IQR [0.54, 0.84], 61/92 below +0.8R, so a +0.8R breakeven can only arm on 31 PX trades. KX targets are 2.0R (v1) / 2.5R (v2) by construction.
+
 ### KX: per-policy summary (trades = 240, sessions = 240)
 
-| policy | trades | sessions | net_usd_sum | net_usd_mean | net_R_mean | win_rate | max_dd_usd | avg_minutes |
-|---|---|---|---|---|---|---|---|---|
-| breakeven_0.8R | 240.00 | 240.00 | 9568.64 | 39.87 | 0.28 | 0.33 | -3178.32 | 20.60 |
-| original | 240.00 | 240.00 | 12638.24 | 52.66 | 0.36 | 0.40 | -1993.64 | 24.70 |
-| time_exit_30 | 240.00 | 240.00 | 8854.74 | 36.89 | 0.25 | 0.44 | -1534.64 | 16.70 | 
+| policy | trades | sessions | net_usd_sum | net_usd_mean | net_R_mean | win_rate | max_dd_usd | eod_exits | avg_minutes |
+|---|---|---|---|---|---|---|---|---|---|
+| breakeven_0.8R | 240 | 240 | 9490.64 | 39.54 | 0.28 | 0.31 | -3178.32 | 0 | 19.30 |
+| no_target_hold_eod | 240 | 240 | 72928.24 | 303.87 | 2.10 | 0.32 | -2408.86 | 78 | 134.10 |
+| original | 240 | 240 | 12638.24 | 52.66 | 0.36 | 0.40 | -1993.64 | 0 | 24.70 |
+| time_exit_30 | 240 | 240 | 8854.74 | 36.89 | 0.25 | 0.44 | -1534.64 | 0 | 16.70 | 
 
 Paired difference vs original (alternative minus original, net of costs), whole-session bootstrap 95% CI:
 
 | policy | trades | sessions | mean_dnet_usd | ci95_usd | mean_dnet_R | ci95_R | trades_changed | overlaps_next_entry | new_overlaps_vs_original |
 |---|---|---|---|---|---|---|---|---|---|
 | time_exit_30 | 240 | 240 | -15.76 | [-32.3, 0.8] | -0.10 | [-0.207, 0.003] | 63 | 9 | 0 |
-| breakeven_0.8R | 240 | 240 | -12.79 | [-30.3, 4.0] | -0.08 | [-0.186, 0.028] | 53 | 5 | 0 | 
+| breakeven_0.8R | 240 | 240 | -13.12 | [-31.7, 4.3] | -0.08 | [-0.195, 0.033] | 53 | 0 | 0 |
+| no_target_hold_eod | 240 | 240 | 251.21 | [161.7, 340.3] | 1.74 | [1.115, 2.338] | 97 | 32 | 15 | 
 
 ### PX: per-policy summary (trades = 92, sessions = 92)
 
-| policy | trades | sessions | net_usd_sum | net_usd_mean | net_R_mean | win_rate | max_dd_usd | avg_minutes |
-|---|---|---|---|---|---|---|---|---|
-| breakeven_0.8R | 92.00 | 92.00 | 2675.98 | 29.09 | 0.19 | 0.71 | -527.62 | 28.10 |
-| original | 92.00 | 92.00 | 2675.98 | 29.09 | 0.19 | 0.71 | -527.62 | 28.10 |
-| time_exit_30 | 92.00 | 92.00 | 1600.48 | 17.40 | 0.11 | 0.65 | -387.40 | 17.50 | 
+| policy | trades | sessions | net_usd_sum | net_usd_mean | net_R_mean | win_rate | max_dd_usd | eod_exits | avg_minutes |
+|---|---|---|---|---|---|---|---|---|---|
+| breakeven_0.8R | 92 | 92 | 2675.98 | 29.09 | 0.19 | 0.71 | -527.62 | 4 | 28.10 |
+| no_target_hold_eod | 92 | 92 | 15241.48 | 165.67 | 1.07 | 0.56 | -517.88 | 58 | 162.40 |
+| original | 92 | 92 | 2675.98 | 29.09 | 0.19 | 0.71 | -527.62 | 4 | 28.10 |
+| time_exit_30 | 92 | 92 | 1600.48 | 17.40 | 0.11 | 0.65 | -387.40 | 0 | 17.50 | 
 
 Paired difference vs original (alternative minus original, net of costs), whole-session bootstrap 95% CI:
 
 | policy | trades | sessions | mean_dnet_usd | ci95_usd | mean_dnet_R | ci95_R | trades_changed | overlaps_next_entry | new_overlaps_vs_original |
 |---|---|---|---|---|---|---|---|---|---|
 | time_exit_30 | 92 | 92 | -11.69 | [-21.8, -2.5] | -0.08 | [-0.146, -0.020] | 26 | 0 | 0 |
-| breakeven_0.8R | 92 | 92 | 0.00 | [0.0, 0.0] | 0.00 | [0.000, 0.000] | 0 | 0 | 0 | 
+| breakeven_0.8R | 92 | 92 | 0.00 | [0.0, 0.0] | 0.00 | [0.000, 0.000] | 0 | 0 | 0 |
+| no_target_hold_eod | 92 | 92 | 136.58 | [76.7, 198.0] | 0.88 | [0.482, 1.282] | 64 | 0 | 0 | 
 
 ## 5. Stage B demonstration: chronological replay from signals.csv (SYNTHETIC)
 
@@ -236,6 +248,15 @@ Paired difference vs original (alternative minus original, net of costs), whole-
 | original | reference | False | 346 | 327 | 19 | 341/346 | 15664.46 | 15369.70 | 242 |
 | time_exit_30 | reference | False | 346 | 332 | 14 | 338/346 | 10624.62 | 15369.70 | 242 |
 | hold_to_eod_no_target | reference | False | 346 | 317 | 29 | 331/346 | 85546.24 | 15369.70 | 242 | 
+
+Signals whose executed flag differs from the export under the generator model (each is downstream of an exit the replay cannot reproduce: a MANUAL exit or an exact-touch stop that fired in the journal):
+
+| signal_id | session | signal_t | executed_in_export | replay_executed | blocking_replay_trade_exit | journal_exit_of_that_trade |
+|---|---|---|---|---|---|---|
+| 35 | 2025-06-04 | 10:21 | True | False | 10:22 STOP | 10:21 STOP |
+| 58 | 2025-07-03 | 11:09 | True | False | 11:10 STOP | 11:09 STOP |
+| 194 | 2025-11-18 | 10:19 | True | False | 10:25 STOP | 10:18 MANUAL |
+| 274 | 2026-02-12 | 10:31 | True | False | 10:52 TARGET | 10:15 MANUAL | 
 
 Stage B entries are re-priced from the bars (open +1 tick), so even the original policy differs from the journal by the MANUAL exits and the fill conventions listed in section 2; the executed/rejected set is the check that the position-limit logic is right. Longer holds (`hold_to_eod_no_target`) change which later signals are blocked.
 

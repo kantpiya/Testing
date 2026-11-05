@@ -110,7 +110,10 @@ def run_reconcile(data: R.Data, out_dir: str, verbose: bool = True) -> dict:
                     net_mismatch=int((~c.net_match).sum()),
                     sum_actual_minus_replay_usd=round(c.net_diff_usd.sum(), 2),
                     sum_abs_diff_usd=round(c.net_diff_usd.abs().sum(), 2))
-    summary = pd.DataFrame({"reference model": counts(cmp_ref), "generator model": counts(cmp_gen)})
+    summary = pd.DataFrame({"reference model": counts(cmp_ref), "generator model": counts(cmp_gen)}).astype(object)
+    for k in summary.index:
+        if not str(k).startswith("sum"):
+            summary.loc[k] = [int(v) for v in summary.loc[k]]
     out["summary"] = summary
     expl = (cmp_ref.groupby("explained_by")
             .agg(trades=("net_diff_usd", "size"), sessions=("session", "nunique"),

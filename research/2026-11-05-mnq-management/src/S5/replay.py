@@ -379,23 +379,33 @@ class BreakevenStop(Rule):
     """Once progress (closed bars) >= trigger_R, move the stop of `legs` to the
     leg's own entry price +/- offset_ticks (favourable offset positive)."""
 
-    def __init__(self, trigger_R: float, offset_ticks: float = 0.0, legs: str = "all",
+    def __init__(self, trigger_R: float, offset_ticks: float = 0.0, offset_R: float = 0.0, legs: str = "all",
                  measure: str = "extreme", label: str = "STOP_BE"):
-        self.trigger_R, self.offset_ticks, self.legs, self.measure, self.label = \
-            float(trigger_R), float(offset_ticks), legs, measure, label
+        self.trigger_R, self.offset_ticks, self.offset_R, self.legs, self.measure, self.label = \
+            float(trigger_R), float(offset_ticks), float(offset_R), legs, measure, label
         self.armed = False
 
+    def _px(self, state, leg):
+        # legs='add': each add leg to its OWN entry; otherwise the position stop goes to the INITIAL entry
+        base = leg.entry_px if self.legs == "add" else state.legs[0].entry_px
+        return base + state.entry.sgn * (self.offset_ticks * state.fm.tick + self.offset_R * state.entry.stop_dist_pts)
+
+    # An add that fills after arming is handled at the next bar open (a stop placed at the fill price of a
+    # market order inside the same bar would be touched almost immediately, which is not what the rule means).
+    # With legs='all' the add inherits the position's breakeven stop when it fills (SetStop runs before AddAction).
+
     def on_bar_open(self, state, i):
-        if self.armed or i == 0:
+        if i == 0:
             return []
-        if state.progress_R(i, self.measure) >= self.trigger_R:
+        if not self.armed and state.progress_R(i, self.measure) >= self.trigger_R:
             self.armed = True
-            out = []
-            for leg in state.select_legs(self.legs):
-                px = leg.entry_px + state.entry.sgn * self.offset_ticks * state.fm.tick
-                out.append(SetStop(px, [leg.leg_id], self.label))
-            return out
-        return []
+        if not self.armed:
+            return []
+        out = []
+        for leg in state.select_legs(self.legs):
+            if leg.stop_label != self.label:
+                out.append(SetStop(self._px(state, leg), [leg.leg_id], self.label))
+        return out
 
 
 class TrailingStop(Rule):
@@ -639,6 +649,7 @@ class TradeSim:
         if not self.open_legs():
             self._finish(i)
             return self.fills[n0:]
+        # order: stop/target amendments first, then adds (so a same-bar add inherits the amended bracket)
         for a in actions:
             if isinstance(a, SetStop):
                 for leg in self.select_legs(a.legs):
@@ -648,7 +659,8 @@ class TradeSim:
             elif isinstance(a, SetTarget):
                 for leg in self.select_legs(a.legs):
                     leg.target_px = None if a.px is None else float(round_tick(a.px))
-            elif isinstance(a, AddAction):
+        for a in actions:
+            if isinstance(a, AddAction):
                 room_here = e.max_position - self.open_contracts() if room is None else room
                 if a.qty <= room_here and not (fm.skip_add_if_exit_same_bar and self._would_exit_in_bar(i)):
                     self._add(i, a.qty, a.reason)
@@ -959,10 +971,10 @@ def summarize(df: pd.DataFrame, by: Optional[str] = None) -> pd.DataFrame:
     def one(g):
         cum = g.sort_values("entry_time").net_usd.cumsum()
         dd = (cum - cum.cummax()).min()
-        return pd.Series(dict(trades=len(g), sessions=g.session.nunique(), net_usd_sum=round(g.net_usd.sum(), 2),
-                              net_usd_mean=round(g.net_usd.mean(), 2), net_R_mean=round(g.net_R.mean(), 3),
-                              win_rate=round((g.net_usd > 0).mean(), 3), max_dd_usd=round(dd, 2),
-                              avg_minutes=round(g.minutes_held.mean(), 1)))
+        return dict(trades=int(len(g)), sessions=int(g.session.nunique()), net_usd_sum=round(g.net_usd.sum(), 2),
+                    net_usd_mean=round(g.net_usd.mean(), 2), net_R_mean=round(g.net_R.mean(), 3),
+                    win_rate=round((g.net_usd > 0).mean(), 3), max_dd_usd=round(dd, 2),
+                    eod_exits=int((g.exit_reason == "TIME_EOD").sum()), avg_minutes=round(g.minutes_held.mean(), 1))
     if by is None:
-        return one(df).to_frame().T
-    return df.groupby(by).apply(one, include_groups=False)
+        return pd.DataFrame([one(df)])
+    return pd.DataFrame([dict(**{by: k}, **one(g)) for k, g in df.groupby(by)]).set_index(by)
