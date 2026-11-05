@@ -30,8 +30,8 @@
 | `reports/S4_pyramiding.md` | Pyramiding / winner retention | Add earns +0.29R of its own risk; every separate add management costs money; add-stop-at-entry buys drawdown only |
 | `reports/S5_replay_engine.md` | Execution / replay engineer | Reconciliation 282/332 exact (316 under the generator's conventions), 10 MANUAL unexplained; exact-touch ambiguity swings 6.8% of net; engine + README |
 | `reports/S6_skeptic.md` | Skeptical portfolio manager | Every tightening loses; the only "winner" (drop the KX target) is generator drift that cannot be verified on real data in under ~2.5 years |
-| `reports/reviewer_A_methods.md` | Reviewer A, quantitative methods | Verdicts on C1–C4 and P0 |
-| `reports/reviewer_B_execution.md` | Reviewer B, MNQ execution trader | Verdicts on C1–C4 and P0 |
+| `reports/reviewer_A_methods.md` | Reviewer A, quantitative methods | C1 revise, C2 revise, C3 retire, C4 retire, P0 advance as control; the minute-10 drift gauge is the first number to compute on real data |
+| `reports/reviewer_B_execution.md` | Reviewer B, MNQ execution trader | C1 retire, C2 advance, C3 revise, C4 advance conditional, P0 control; materiality floor $1,000/yr or 2R; eleven fixes to the forward-sim spec (applied) |
 
 ## Runnable artefacts
 

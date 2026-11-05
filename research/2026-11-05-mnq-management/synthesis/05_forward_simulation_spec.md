@@ -12,7 +12,10 @@ Candidates carried forward from the pre-registration (`prereg/challengers.md`) a
 | Open profit at minute k | direction × (close of bar k − entry fill) / stop distance, bar k = the k-th full 1-minute bar after the entry bar |
 | MFE at minute k | max over bars 1..k of direction × (favourable extreme − entry fill) / stop distance |
 | Decision time | the close of the bar that satisfies the trigger; the action is executable at the next bar open |
-| Net | after commission on every fill at the desk's actual rate and the slippage actually observed on live fills (not an assumption) |
+| Net | after commission on every fill at the desk's actual rate. A paper exit never fills, so its slippage is **imputed** from the desk's own live fills of the same order type (median and 90th percentile of observed STOP and MKT slippage, recomputed monthly, columns `assumed_slip_ticks`, `empirical_slip_p50`, `empirical_slip_p90`); report the paired delta under both p50 and p90. |
+| Paired delta | shadow net minus the **mechanical P0 replay** of the same trade (not minus the live net), so that discretionary interventions do not enter the comparison; live net is logged separately |
+| Changed trade | a trade on which the shadow's exit differs from mechanical P0 by more than one tick; sample minima below count changed trades, not conditioned trades |
+| One-time header | `stop_trigger_source` (last trade vs bid/ask, from the broker), `bar_ts_label` (open or close), bar source instrument (must be MNQ trades) |
 
 ## 2. Triggers and order actions per candidate (shadow)
 
@@ -20,18 +23,20 @@ Candidates carried forward from the pre-registration (`prereg/challengers.md`) a
 Live OCO stop + target; KX add rule; flat 15:55. Logged as-is.
 
 ### C1 — KX stall → breakeven
-- **Trigger.** KX only. MFE ≥ +0.8R has occurred (any earlier bar) **and** the current bar closes ≤ +0.3R **and** the trade is still open under P0.
-- **Shadow action.** At the next bar open: stop of all legs = entry fill (tick-rounded). Target unchanged. Record the paper exit when the shadow stop or target is touched on subsequent bars (stop − 1 tick, bar open if gapped), or the 15:55 open.
-- **Live equivalent if promoted.** Modify the resting stop order (OCO leg) to the entry price; no new order; the target stays.
+- **Trigger.** KX only. MFE through and including bar k ≥ +0.8R **and** bar k closes ≤ +0.3R **and** the trade is still open under P0. Decision time = close of bar k.
+- **Shadow action.** At the open of bar k+1: if that open is still on the favourable side of the entry fill, stop of all legs = entry fill (tick-rounded), target unchanged; if the open is at or through the entry fill, the shadow records a market exit at that open (imputed slippage). Record the paper exit when the shadow stop or target is touched on subsequent bars, or at the 15:55 open. Log `order_action ∈ {MODIFY, CANCEL_REPLACE, MKT}`, `modify_rejected_flag`, `first_bar_hit_flag`, `both_touched_flag` (report both orderings when set).
+- **What this rule is in practice (SYNTHETIC finding, director-verified).** In development 13 of 60 triggers had the next open already through entry and 21 more were stopped in the first live bar: 34 of 60 shadow actions are an exit one bar after the stall, not a tightened stop. Log both outcomes separately; the forward decision is on the whole rule.
+- **Live equivalent if promoted.** Modify the resting OCO stop leg to the entry price (cancel/replace where the platform requires; confirm the OCO link survives); if the modify is rejected because the market is through the level, send a market order.
 
 ### C2 — KX late profit-conditional breakeven
-- **Trigger.** KX only. At the close of bar 20 after entry, open profit ≥ +0.3R and the trade is open under P0.
-- **Shadow action / live equivalent.** As C1, at the open of bar 21.
+- **Trigger.** KX only. At clock time entry + 20 minutes (the close of the bar that ends then; state clock time, not bar index, to avoid the off-by-one between reports), open profit ≥ +0.3R and the trade is open under P0.
+- **Shadow action / live equivalent.** As C1, at the following bar open. In development this rule had 0 rejected modifies and 0 first-bar hits (Reviewer B), so it executes as modelled. Tail metric is defined on the **whole position** (an add leg's breakeven-at-entry is about one stop distance below its own fill), with a session-bootstrap CI.
 
 ### C3 — add-leg stop at the original entry
 - **Trigger.** KX add fill (leg 2).
 - **Shadow action.** Leg 2 gets a paper stop at the entry fill of leg 1; leg 1 unchanged. Paper exit of leg 2 only when touched.
-- **Live equivalent if promoted.** Submit the add with its own stop order (not joined to the original OCO) at the leg-1 entry price; the add's target order remains the shared target.
+- **Live equivalent if promoted.** The add gets its **own OCO**: stop (qty = add) at the leg-1 entry price and limit (qty = add) at the shared target price. A single shared target with a separate add stop is unsafe: if the shared target fills, the add stop is orphaned and would open a reverse position; if the add stop fills, the shared target is over-quantity (Reviewer B).
+- **Primary statistic (revised per both reviewers).** The logged count P(reach target \| price retraced to the leg-1 entry after the add), with its CI, decided at ≥ 40 add trades and ≥ 15 retraces; no P&L objective.
 
 ### C4 — PX far target
 - **Trigger.** PX entry.
@@ -45,7 +50,7 @@ For every live TARGET exit record `cont_R = direction × (15:55 open − target 
 
 **Trade row:** `trade_id, signal_id, session, strategy_version, family, direction, entry_ts, entry_fill, initial_contracts, planned_stop, planned_target, planned_risk_usd, add_ts, add_fill, add_contracts, live_exit_ts, live_exit_px, live_exit_reason, live_net_usd, live_net_R, candidate, shadow_trigger_ts, shadow_action, shadow_exit_ts, shadow_exit_px, shadow_exit_reason, shadow_net_usd, shadow_net_R, paired_delta_R, paired_delta_usd, overlap_flag (shadow still open when a later live entry fired), position_limit_block_flag, manual_intervention_flag, bars_missing_flag`.
 
-**Decision-event row:** `trade_id, candidate, event (TRIGGER/BE_SET/STOP_HIT/TARGET_HIT/EOD), bar_close_ts, open_profit_R, mfe_R, mae_R, minutes_since_entry, price, note`.
+**Decision-event row:** `trade_id, candidate, leg_id, qty, event (TRIGGER/BE_SET/MKT_EXIT/STOP_HIT/TARGET_HIT/EOD), bar_close_ts, action_sent_ts, action_ack_ts, order_action, modify_rejected_flag, first_bar_hit_flag, exact_touch_flag, both_touched_flag, open_profit_R, mfe_R, mae_R, minutes_since_entry, price, exit_bar_ohlc, first_at_or_through_trade_ts, note`.
 
 **Session row:** `session, n_live_trades, n_shadow_triggers per candidate, live_session_net, shadow_session_net per candidate, max_concurrent_contracts, n_signals_rejected_by_limit`.
 
@@ -53,22 +58,23 @@ Logging the rejected signals (`signals.csv` schema in `02_inventory_and_export_f
 
 ## 4. Sample and duration
 
-Estimated from the desk's historical frequency (to be replaced by the real numbers once the export is in): roughly one KX trade per session, a stall state in about a quarter of KX trades, an add in about a third, one PX trade every 2.6 sessions.
+Estimated from the synthetic desk's frequency (to be replaced by the real numbers once the export is in): roughly one KX trade per session, a stall state in about a quarter of KX trades, an add in about a third, one PX trade every 2.6 sessions. Development was exactly one trading year, so development Δ$ reads as $ per year.
 
-| Candidate | Unit | Minimum sample before any read | Why |
-|---|---|---|---|
-| C1 | stall trades, distinct sessions | 40 / 40 | the synthetic holdout's 13 stall trades gave a CI from −0.5R to +1.1R, useless; 40 brings the CI half-width near ±0.45R at the observed SD ≈ 1.5R |
-| C2 | conditioned trades at minute 20 | 60 / 60 | tail-halving test needs ≥ 15 trades in the worst decile |
-| C3 | add trades | 40 / 40 | S4's break-even count P(target \| retrace to entry after add) needs ≥ 15 retraces |
-| C4 | PX trades | 90 / 90 | ±0.1R per entry resolution (S3) |
-| Continuation audit | target exits | 100 | SD of cont_R ≈ 2–6R in the synthetic set; 100 gives ±0.5–1.2R |
+| Candidate | Unit | Minimum sample before any read | Months at the synthetic rate | Why |
+|---|---|---|---|---|
+| Drift gauge (first) | KX trades open at minute 10 | 150 | ≈ 12 | Reviewer A: paired (exit at minute-10 open − P0) ≤ −0.25R with CI excluding 0 ⇒ drift present; within ±0.10R ⇒ absent. Decides whether any "hold" result transfers |
+| C1 | stall trades / changed trades | 100 / 60 | ≈ 20 | MDE 0.42–0.50R at the observed paired SD 1.5–1.8R (Reviewer A); 40 stalls can only detect 0.7–0.8R |
+| C2 | conditioned trades / changed trades | 60 / 15 | ≈ 12 | tail metric needs ≥ 15 changed trades; the holdout's 13 conditioned trades changed 1 |
+| C3 | add trades / retraces to entry | 40 / 15 | ≈ 7 | the decisive proportion needs ≥ 15 retrace events |
+| C4 | PX trades | 90 | ≈ 11 | ±0.1R per entry resolution (S3); the retire rule may not fire before this sample (Reviewer B) |
+| Continuation audit | target exits | 100 | ≈ 8 | SD of cont_R ≈ 2–6R in the synthetic set; 100 gives ±0.5–1.2R |
 
-At the historical rate that is about 6–9 months of trading. **One pre-planned interim read at half the sample**, reported but not acted on unless the stopping rule below fires.
+**One pre-planned interim read at half the sample**, reported but not acted on unless the stopping rule below fires (99% CI at the interim).
 
 ## 5. Predetermined criteria
 
-**Promote a candidate to a live A/B (half the contracts under the candidate, half under P0, alternating by session parity) only if all hold at the full sample:**
-1. Paired mean Δ net R per conditioned trade vs P0 has a 95% session-bootstrap CI excluding 0 **in the pre-registered direction** (C1, C4: Δ > 0; C2, C3: Δ ≥ −0.10R with the tail metric halved).
+**Promote a candidate to a live A/B (whole trades assigned by session parity, assignment logged before entry; never split contracts, since 23% of KX and 78% of PX trades are one-lots) only if all hold at the full sample:**
+1. Paired mean Δ net R per conditioned trade vs mechanical P0 has a 95% session-bootstrap CI excluding 0 **in the pre-registered direction** (C1, C4: Δ > 0; C2: Δ ≥ −0.10R with the tail metric halved; C3: the retrace proportion below 0.35 with CI), **and** the point estimate clears the materiality floor of $1,000 per year or 2R of drawdown reduction (Reviewer B).
 2. The sign holds in each strategy version with ≥ 20 trades.
 3. Removing the top 3 sessions by benefit leaves ≥ 60% of the benefit.
 4. Stage B replay of the forward period (position limit, rejected signals) shows portfolio Δ ≥ 0.
