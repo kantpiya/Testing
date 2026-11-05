@@ -1,0 +1,2 @@
+instrument,commission_per_side_usd,exchange_fees_included,point_value_usd,tick,assumed_slippage_ticks_market_and_stop,assumed_slippage_ticks_limit,position_limit_contracts,eod_flat_time_et
+MNQ,0.74,True,2.0,0.25,1,0,4,15:55

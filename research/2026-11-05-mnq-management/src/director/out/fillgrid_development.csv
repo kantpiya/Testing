@@ -1,0 +1,7 @@
+variant,C1_stall_BE,C1_stall_BE_amb,C2_late_BE20,C2_late_BE20_amb,C3_add_stop_entry,C3_add_stop_entry_amb,C4_PX_far_target,C4_PX_far_target_amb,D1_KX_notarget_BE2R,D1_KX_notarget_BE2R_amb
+reference,-3400.0,0,121.0,0,-320.0,0,5462.0,0,61112.0,0
+penetrate_stop,-3745.0,0,121.0,0,-320.0,0,5462.0,0,61334.0,0
+slip0,-3367.0,0,131.0,0,-316.0,0,5466.0,0,61265.0,0
+slip2,-3434.0,0,112.0,0,-324.0,0,5458.0,0,60959.0,0
+target_first,-3400.0,0,121.0,0,-320.0,0,5462.0,0,61112.0,0
+no_bracket_entry_bar,-3400.0,0,121.0,0,-320.0,0,5462.0,0,61112.0,0

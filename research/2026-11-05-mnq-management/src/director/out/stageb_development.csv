@@ -1,0 +1,7 @@
+policy,executed,rejected,net_usd,max_dd,worst_session,blocked_vs_export,freed_vs_export,d_net_vs_P0
+P0,327,19,15664.0,-1807.0,-359.0,5,0,0.0
+C1_stall_BE,342,4,11821.0,-3025.0,-359.0,2,12,-3843.0
+C2_late_BE20,330,16,15720.0,-1676.0,-359.0,5,3,56.0
+C3_add_stop_entry,331,15,15214.0,-1786.0,-389.0,4,3,-450.0
+C4_PX_far_target,327,19,20915.0,-1678.0,-490.0,5,0,5251.0
+D1_KX_notarget_BE2R,327,19,89732.0,-1869.0,-490.0,5,0,74068.0
