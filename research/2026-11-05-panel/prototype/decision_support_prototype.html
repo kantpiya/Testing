@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slot Decision Prototype</title>
+<style>
+  :root{
+    --bg:#f6f7f9;--panel:#ffffff;--ink:#161a1f;--muted:#5d6670;--line:#d9dee5;
+    --ok:#1f7a4d;--ok-bg:#e4f4ea;--warn:#8a5a00;--warn-bg:#fff2d6;
+    --bad:#a32020;--bad-bg:#fbe3e3;--grey:#4b5563;--grey-bg:#e9ecf0;
+    --blue:#1d4ed8;--blue-bg:#e3eaff;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1216;--panel:#171b21;--ink:#e8ebef;--muted:#9aa3ad;--line:#2b323b;
+      --ok:#5ed39a;--ok-bg:#12301f;--warn:#f0c060;--warn-bg:#3a2a08;
+      --bad:#ff8080;--bad-bg:#3a1414;--grey:#b8c0c9;--grey-bg:#242a32;
+      --blue:#8fb0ff;--blue-bg:#17233f;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1216;--panel:#171b21;--ink:#e8ebef;--muted:#9aa3ad;--line:#2b323b;
+    --ok:#5ed39a;--ok-bg:#12301f;--warn:#f0c060;--warn-bg:#3a2a08;
+    --bad:#ff8080;--bad-bg:#3a1414;--grey:#b8c0c9;--grey-bg:#242a32;
+    --blue:#8fb0ff;--blue-bg:#17233f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  header{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  header h1{font-size:17px;margin:0 12px 0 0}
+  .banner{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:4px 8px;font-size:12px;font-weight:600}
+  main{max-width:1180px;margin:0 auto;padding:16px}
+  .scen{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .scen button{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:14px}
+  .scen button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue-bg);color:var(--blue);font-weight:600}
+  .grid{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}
+  @media (max-width:860px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .card h2{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+  .action{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.03em;border:1px solid transparent}
+  .st-ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+  .st-unfav{background:var(--bad-bg);color:var(--bad);border-color:var(--bad)}
+  .st-insuf{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+  .st-unavail{background:var(--grey-bg);color:var(--grey);border-color:var(--grey);border-style:dashed}
+  .st-limit{background:var(--blue-bg);color:var(--blue);border-color:var(--blue)}
+  .big{font-size:26px;font-weight:800;margin:4px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{text-align:left;padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+  .num{font-family:var(--mono);text-align:right;white-space:nowrap}
+  .muted{color:var(--muted)}
+  .small{font-size:12.5px}
+  details{margin-top:8px}
+  summary{cursor:pointer;color:var(--blue);font-weight:600}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13.5px}
+  .kv b{font-weight:600;color:var(--muted)}
+  .diff li{margin:3px 0}
+  .legend span{margin-right:10px}
+  pre{font-family:var(--mono);font-size:12.5px;background:var(--grey-bg);padding:8px;border-radius:6px;overflow:auto}
+  .row-blocked td{opacity:.75}
+  footer{color:var(--muted);font-size:12px;margin:18px 0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Slot Decision Prototype — MNQ / MES</h1>
+  <span class="banner">SAMPLE DATA ONLY · NOT CONNECTED TO ANY BROKER OR FEED · all statistics are synthetic</span>
+</header>
+<main>
+  <div class="scen" id="scen" role="tablist" aria-label="Scenario"></div>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="h-decision">
+      <h2 id="h-decision">Decision card (10-second view)</h2>
+      <div id="decision"></div>
+    </section>
+
+    <section class="card">
+      <h2>Account &amp; exposure (as of signal time)</h2>
+      <div id="account"></div>
+    </section>
+
+    <section class="card" style="grid-column:1/-1">
+      <h2>Slot board — every eligible slot at this instant</h2>
+      <div style="overflow:auto"><table id="slots"></table></div>
+      <p class="small muted legend">
+        <span class="pill st-ok">FAVORABLE</span>
+        <span class="pill st-unfav">HISTORICALLY UNFAVORABLE</span>
+        <span class="pill st-insuf">INSUFFICIENT EVIDENCE</span>
+        <span class="pill st-unavail">INPUT UNAVAILABLE</span>
+        <span class="pill st-limit">ACCOUNT LIMIT REACHED</span>
+        — each state names its denominator; shape and wording differ, never color alone.
+      </p>
+    </section>
+
+    <section class="card" style="grid-column:1/-1">
+      <h2>Why did the decision change? (compared with previous scenario)</h2>
+      <div id="diff" class="diff"></div>
+    </section>
+
+    <section class="card" style="grid-column:1/-1">
+      <h2>Research drill-down (not for the 10-second view)</h2>
+      <div id="drill"></div>
+    </section>
+  </div>
+  <footer>
+    Prototype built 2026-11-05 for the research panel. Multipliers: MNQ $2/pt, MES $5/pt (public, verify against CME). ES↔NQ beta used in exposure math is a labeled sample value.
+    Evidence tuples are (sessions n, mean net R-ticks after costs, 90% CI). No confidence scores are shown by design.
+  </footer>
+</main>
+
+<script>
+/* ---------- Sample data (SYNTHETIC) ---------- */
+const MULT = { MNQ: 2, MES: 5 };
+const BETA_ES_PER_NQ = 0.55; // sample: $-move in ES per $-move in NQ per index point, after rescaling; label: SAMPLE
+const NQ_PRICE = 20000, ES_PRICE = 5700; // sample levels for %-move math
+
+// Evidence policy (written criteria, from C3-style grading):
+//  FAVORABLE: n >= 20 sessions AND lower CI bound > 0 after costs
+//  HISTORICALLY UNFAVORABLE: n >= 20 AND upper CI bound < 0
+//  INSUFFICIENT EVIDENCE: n < 20 OR CI straddles 0
+//  INPUT UNAVAILABLE: a required input is stale/missing (overrides evidence state)
+//  ACCOUNT LIMIT REACHED: account gate blocks (overrides everything; shown as blocked, not as bad evidence)
+const N_MIN = 20;
+
+const scenarios = [
+ {
+  id:'clean', name:'1 · Clean setup', time:'10:12:04 ET', date:'2026-11-04 (sample)',
+  condition:{ label:'Orderly trend (acceptance above IB high)', inputs:{ normVol:0.95, ibBreak:'accepted (3 closes > IB high)', esNq:'agree (+)', nextEvent:'none ≤ 60 min' } },
+  account:{ product:'Funded (sample firm X)', balance:52140, dailyLossLeft:-900, trailDDLeft:-1480, maxContracts:5, openPositions:[] },
+  signals:[
+    { slot:'KX-continuation v2.3', side:'LONG', inst:'MNQ', size:1, entry:20012.5, stop:19992.5, target:20052.5,
+      ev:{ n:41, mean:+3.1, lo:+0.8, hi:+5.4 }, inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' } },
+  ],
+ },
+ {
+  id:'overlap', name:'2 · Overlapping signals, release pending', time:'09:42:10 ET', date:'2026-11-05 (sample)',
+  condition:{ label:'Post-open expansion; FOMC statement 14:00 ET is 4h18m away; ISM Services at 10:00 ET is 18 min away', inputs:{ normVol:1.35, ibBreak:'IB not yet formed (ends 10:30)', esNq:'ES lagging NQ (magnitude diverges, direction agrees)', nextEvent:'ISM Services 10:00 ET (sample)' } },
+  account:{ product:'Funded (sample firm X)', balance:51380, dailyLossLeft:-650, trailDDLeft:-1120, maxContracts:5,
+    openPositions:[{ inst:'MES', side:'LONG', size:1, entry:5692.0, unreal:+37.5 }] },
+  signals:[
+    { slot:'KX-continuation v2.3', side:'LONG', inst:'MNQ', size:1, entry:19985.0, stop:19965.0, target:20025.0,
+      ev:{ n:38, mean:+2.4, lo:+0.3, hi:+4.5 }, inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' } },
+    { slot:'PX-opening-drive v1.1', side:'LONG', inst:'MNQ', size:1, entry:19986.0, stop:19960.0, target:20040.0,
+      ev:{ n:23, mean:-1.9, lo:-4.6, hi:+0.8 }, inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' },
+      note:'When KX and PX fire within 2 min, historical joint stop-out rate 61% (n=18 sessions) — SAMPLE' },
+  ],
+ },
+ {
+  id:'insufficient', name:'3 · Insufficient evidence', time:'11:27:40 ET', date:'2026-11-03 (sample)',
+  condition:{ label:'Quiet rotation inside IB (range 0.6× median)', inputs:{ normVol:0.58, ibBreak:'none', esNq:'agree (flat)', nextEvent:'none ≤ 60 min' } },
+  account:{ product:'Evaluation (sample firm Y)', balance:50410, dailyLossLeft:-1800, trailDDLeft:-2100, maxContracts:3, openPositions:[] },
+  signals:[
+    { slot:'Weak-reversal v0.9 (calm-vol variant, 2 micros)', side:'SHORT', inst:'MNQ', size:2, entry:19940.0, stop:19955.0, target:19910.0,
+      ev:{ n:7, mean:+4.2, lo:-3.1, hi:+11.5 }, inputs:{ normVol:'ok', esNq:'ok', eventClock:'ok' },
+      note:'Calm-market 2-micro sizing is a hypothesis under test; the variant has 7 sessions of history — SAMPLE' },
+  ],
+ },
+ {
+  id:'unavail', name:'4 · Input unavailable + account limit', time:'14:31:05 ET', date:'2026-11-05 (sample)',
+  condition:{ label:'FOMC press conference window (14:30–15:15 ET); ES feed stale 41 s', inputs:{ normVol:2.4, ibBreak:'accepted below IB low', esNq:'STALE (last ES print 14:30:24)', nextEvent:'in progress: FOMC presser' } },
+  account:{ product:'Funded (sample firm X)', balance:50620, dailyLossLeft:-40, trailDDLeft:-360, maxContracts:5,
+    openPositions:[{ inst:'MNQ', side:'SHORT', size:1, entry:19890.0, unreal:-62.0 }] },
+  signals:[
+    { slot:'Sell-off-recovery v1.4', side:'LONG', inst:'MNQ', size:1, entry:19862.0, stop:19842.0, target:19902.0,
+      ev:{ n:29, mean:+2.7, lo:+0.4, hi:+5.0 }, inputs:{ normVol:'ok', esNq:'stale', eventClock:'ok' } },
+    { slot:'Event-VWAP fade v0.5 (anchor 14:00 statement)', side:'LONG', inst:'MNQ', size:1, entry:19864.0, stop:19840.0, target:19910.0,
+      ev:{ n:12, mean:+1.1, lo:-2.9, hi:+5.1 }, inputs:{ normVol:'ok', esNq:'stale', eventClock:'ok' } },
+  ],
+ },
+];
+
+/* ---------- Decision logic (transparent rules) ---------- */
+function evidenceState(ev){
+  if (ev.n < N_MIN) return 'INSUFFICIENT EVIDENCE';
+  if (ev.lo > 0) return 'FAVORABLE';
+  if (ev.hi < 0) return 'HISTORICALLY UNFAVORABLE';
+  return 'INSUFFICIENT EVIDENCE';
+}
+function stateClass(s){
+  return { 'FAVORABLE':'st-ok','HISTORICALLY UNFAVORABLE':'st-unfav','INSUFFICIENT EVIDENCE':'st-insuf','INPUT UNAVAILABLE':'st-unavail','ACCOUNT LIMIT REACHED':'st-limit' }[s];
+}
+function riskDollars(sig){ return Math.abs(sig.entry - sig.stop) * MULT[sig.inst] * sig.size; }
+function exposurePerPoint(positions){ // $ per NQ index point, converting MES via beta (SAMPLE)
+  let perPt = 0;
+  for (const p of positions){
+    const sign = p.side === 'LONG' ? 1 : -1;
+    if (p.inst === 'MNQ') perPt += sign * MULT.MNQ * p.size;
+    else if (p.inst === 'MES') perPt += sign * MULT.MES * p.size * BETA_ES_PER_NQ * (ES_PRICE / NQ_PRICE) ; // approx: $/NQ-pt equivalent
+  }
+  return perPt;
+}
+function perOnePct(positions){ // $ P&L for a +1% move in NQ (MES scaled by beta)
+  let d = 0;
+  for (const p of positions){
+    const sign = p.side === 'LONG' ? 1 : -1;
+    if (p.inst === 'MNQ') d += sign * MULT.MNQ * p.size * NQ_PRICE * 0.01;
+    else if (p.inst === 'MES') d += sign * MULT.MES * p.size * ES_PRICE * 0.01 * BETA_ES_PER_NQ;
+  }
+  return d;
+}
+function decide(sc){
+  const acct = sc.account;
+  const openContracts = acct.openPositions.reduce((a,p)=>a+p.size,0);
+  const rows = []; let cumulative = 0; let cumContracts = openContracts;
+  const base = perOnePct(acct.openPositions);
+  // rank: FAVORABLE first by mean; then INSUFFICIENT; then unfavorable; unavailable/blocked never trade
+  const ranked = sc.signals.map(s=>{
+    let state = evidenceState(s.ev);
+    const reasons = [];
+    if (Object.values(s.inputs).some(v=>v!=='ok')){ state='INPUT UNAVAILABLE'; reasons.push('required input stale/missing: ' + Object.entries(s.inputs).filter(([k,v])=>v!=='ok').map(([k,v])=>k+'='+v).join(', ')); }
+    return { s, state, reasons };
+  });
+  const order = { 'FAVORABLE':0, 'INSUFFICIENT EVIDENCE':1, 'HISTORICALLY UNFAVORABLE':2, 'INPUT UNAVAILABLE':3 };
+  ranked.sort((a,b)=> (order[a.state]-order[b.state]) || (b.s.ev.mean - a.s.ev.mean));
+  for (const r of ranked){
+    const s = r.s; const risk = riskDollars(s);
+    let action = 'SKIP';
+    if (r.state === 'FAVORABLE') action = 'TAKE';
+    if (r.state === 'INSUFFICIENT EVIDENCE') { action = 'TAKE (baseline size, research flag)'; r.reasons.push('evidence does not justify deviating from the pre-registered baseline either way; take at baseline size and log'); }
+    if (r.state === 'HISTORICALLY UNFAVORABLE') r.reasons.push(`n=${s.ev.n} sessions, mean ${fmt(s.ev.mean)} R-ticks, 90% CI [${fmt(s.ev.lo)}, ${fmt(s.ev.hi)}] after costs`);
+    if (r.state === 'INPUT UNAVAILABLE') action = 'SKIP (cannot evaluate)';
+    // account gates, applied only to actions that would trade
+    if (action.startsWith('TAKE')){
+      if (cumContracts + s.size > acct.maxContracts){ r.state='ACCOUNT LIMIT REACHED'; action='BLOCKED'; r.reasons.push(`max contracts ${acct.maxContracts}: open ${cumContracts} + ${s.size}`); }
+      else if (risk > Math.abs(acct.dailyLossLeft) - cumulative){ r.state='ACCOUNT LIMIT REACHED'; action='BLOCKED'; r.reasons.push(`stop risk $${risk.toFixed(0)} > daily loss remaining $${(Math.abs(acct.dailyLossLeft)-cumulative).toFixed(0)}`); }
+      else if (risk > Math.abs(acct.trailDDLeft) - cumulative){ r.state='ACCOUNT LIMIT REACHED'; action='BLOCKED'; r.reasons.push(`stop risk $${risk.toFixed(0)} > trailing drawdown remaining`); }
+    }
+    // duplicate-exposure check: a second MNQ same-side signal within the same minute
+    const already = acct.openPositions.concat(rows.filter(x=>x.action.startsWith('TAKE')).map(x=>({inst:x.s.inst,side:x.s.side,size:x.s.size})));
+    const sameDir = already.filter(p=>p.side===s.side).length;
+    if (action.startsWith('TAKE') && sameDir>0){ r.reasons.push(`adds to ${sameDir} existing same-direction position(s) — exposure, not diversification`); if (r.state==='INSUFFICIENT EVIDENCE'){ action='SKIP (duplicate exposure, no evidence it adds value)'; } }
+    if (action.startsWith('TAKE')){ cumulative += risk; cumContracts += s.size; }
+    const after = perOnePct(already.concat(action.startsWith('TAKE')?[{inst:s.inst,side:s.side,size:s.size}]:[]));
+    rows.push({ s, state:r.state, action, reasons:r.reasons, risk, deltaPct: after - perOnePct(already) });
+  }
+  const taken = rows.filter(r=>r.action.startsWith('TAKE'));
+  const headline = taken.length ? `TAKE ${taken.map(r=>r.s.slot.split(' ')[0]).join(' + ')}` : 'NO NEW TRADE';
+  return { rows, headline, base, baseContracts: openContracts };
+}
+function fmt(x){ return (x>0?'+':'') + x.toFixed(1); }
+function money(x){ return (x<0?'−':'+') + '$' + Math.abs(x).toFixed(0); }
+
+/* ---------- Rendering ---------- */
+let current = 0, previous = null;
+function render(i){
+  const sc = scenarios[i]; const d = decide(sc);
+  document.querySelectorAll('#scen button').forEach((b,j)=>b.setAttribute('aria-pressed', j===i));
+  // decision card
+  const first = d.rows[0];
+  const takeRows = d.rows.filter(r=>r.action.startsWith('TAKE'));
+  const totalRisk = takeRows.reduce((a,r)=>a+r.risk,0);
+  const totalDelta = takeRows.reduce((a,r)=>a+r.deltaPct,0);
+  const changers = whatWouldChange(sc, d);
+  document.getElementById('decision').innerHTML = `
+    <div class="kv"><b>Time</b><span>${sc.time} · ${sc.date}</span><b>Condition</b><span>${sc.condition.label}</span></div>
+    <div class="big">${d.headline}</div>
+    <div class="action">${d.rows.map(r=>`<span class="pill ${stateClass(r.state)}">${r.s.slot.split(' ')[0]}: ${r.state}</span>`).join('')}</div>
+    <div class="kv" style="margin-top:8px">
+      <b>Reason</b><span>${d.rows.map(r=>`<div><strong>${r.s.slot}</strong> → ${r.action}${r.reasons.length?': '+r.reasons.join('; '):''}</div>`).join('')}</span>
+      <b>Added exposure</b><span>${takeRows.length? `${money(totalDelta)} per +1% NQ move; stop risk $${totalRisk.toFixed(0)}; book goes from ${money(d.base)} to ${money(d.base+totalDelta)} per +1%` : 'none'}</span>
+      <b>What changes this</b><span><ul style="margin:0;padding-left:18px">${changers.map(c=>`<li>${c}</li>`).join('')}</ul></span>
+    </div>`;
+  // account
+  const a = sc.account;
+  document.getElementById('account').innerHTML = `
+    <div class="kv">
+      <b>Product</b><span>${a.product} <span class="muted small">(rules are labeled sample parameters)</span></span>
+      <b>Balance</b><span class="num">$${a.balance.toLocaleString()}</span>
+      <b>Daily loss left</b><span class="num">${money(a.dailyLossLeft)}</span>
+      <b>Trailing DD left</b><span class="num">${money(a.trailDDLeft)}</span>
+      <b>Contracts</b><span class="num">${d.baseContracts} open / ${a.maxContracts} max</span>
+      <b>Open positions</b><span>${a.openPositions.length? a.openPositions.map(p=>`${p.side} ${p.size} ${p.inst} @ ${p.entry} (unreal ${money(p.unreal)})`).join('<br>') : 'flat'}</span>
+      <b>Book exposure</b><span class="num">${money(d.base)} per +1% NQ (MES via sample β=${BETA_ES_PER_NQ})</span>
+    </div>`;
+  // slot board
+  document.getElementById('slots').innerHTML = `
+    <tr><th>Slot / version</th><th>Side · inst · size</th><th>Entry / stop / target</th><th class="num">Stop risk $</th><th>Evidence (n, mean, 90% CI)</th><th>State</th><th>Action</th><th class="num">Δ$ per +1%</th></tr>
+    ${d.rows.map(r=>`<tr class="${r.action.startsWith('TAKE')?'':'row-blocked'}">
+      <td>${r.s.slot}${r.s.note?`<div class="small muted">${r.s.note}</div>`:''}</td>
+      <td>${r.s.side} · ${r.s.inst} · ${r.s.size}</td>
+      <td class="num">${r.s.entry} / ${r.s.stop} / ${r.s.target}</td>
+      <td class="num">${r.risk.toFixed(0)}</td>
+      <td class="num">n=${r.s.ev.n}, ${fmt(r.s.ev.mean)} [${fmt(r.s.ev.lo)}, ${fmt(r.s.ev.hi)}]</td>
+      <td><span class="pill ${stateClass(r.state)}">${r.state}</span></td>
+      <td>${r.action}</td>
+      <td class="num">${r.action.startsWith('TAKE')?money(r.deltaPct):'—'}</td></tr>`).join('')}`;
+  // diff vs previous
+  const diffEl = document.getElementById('diff');
+  if (previous === null || previous === i){ diffEl.innerHTML = '<p class="muted">Switch scenarios to see which inputs changed and how each change altered the decision.</p>'; }
+  else {
+    const p = scenarios[previous]; const pd = decide(p);
+    const items = [];
+    items.push(`<li><b>Headline:</b> "${pd.headline}" → "${d.headline}"</li>`);
+    for (const k of Object.keys(sc.condition.inputs)){ if (String(p.condition.inputs[k]) !== String(sc.condition.inputs[k])) items.push(`<li><b>${k}:</b> ${p.condition.inputs[k]} → ${sc.condition.inputs[k]}</li>`); }
+    if (p.account.openPositions.length !== sc.account.openPositions.length) items.push(`<li><b>Open positions:</b> ${p.account.openPositions.length} → ${sc.account.openPositions.length} (changes duplicate-exposure and contract-limit checks)</li>`);
+    if (p.account.dailyLossLeft !== sc.account.dailyLossLeft) items.push(`<li><b>Daily loss remaining:</b> ${money(p.account.dailyLossLeft)} → ${money(sc.account.dailyLossLeft)}</li>`);
+    for (const r of d.rows){ const prev = pd.rows.find(x=>x.s.slot===r.s.slot); items.push(`<li><b>${r.s.slot}:</b> ${prev? prev.state+' / '+prev.action : 'not present'} → ${r.state} / ${r.action}</li>`); }
+    diffEl.innerHTML = `<ul>${items.join('')}</ul><p class="small muted">Rule trace: evidence state (n≥${N_MIN} and CI sign) → input availability override → account gates (contracts, daily loss, trailing DD) → duplicate-exposure check. Each step is deterministic and shown above.</p>`;
+  }
+  // drill-down
+  document.getElementById('drill').innerHTML = `
+    <details open><summary>Evidence policy (written criteria)</summary>
+      <pre>FAVORABLE                : n ≥ ${N_MIN} sessions AND 90% CI lower bound > 0 (net R-ticks after costs)
+HISTORICALLY UNFAVORABLE : n ≥ ${N_MIN} AND 90% CI upper bound < 0
+INSUFFICIENT EVIDENCE    : n < ${N_MIN} OR CI straddles 0  → trade at pre-registered BASELINE size, flag for research
+INPUT UNAVAILABLE        : any required feed stale/missing → cannot evaluate; do NOT reinterpret as unfavorable
+ACCOUNT LIMIT REACHED    : account gate blocks → BLOCKED regardless of evidence (quality ≠ constraint)
+Unit of evidence = independent trading session, not trade. Cells with the same mechanism share the same denominator.</pre></details>
+    <details><summary>Filter accounting for this scenario (what a real system would compute)</summary>
+      <table><tr><th>Quantity</th><th>Definition</th><th>Sample value</th></tr>
+      <tr><td>Eligible signals</td><td>all slots that fired at this bar, before any gate</td><td class="num">${sc.signals.length}</td></tr>
+      <tr><td>Trades retained</td><td>actions starting with TAKE</td><td class="num">${takeRows.length}</td></tr>
+      <tr><td>Losses avoided / winners discarded</td><td>requires logged counterfactual outcome of every rejected signal (not available until rejected signals are logged)</td><td class="num">n/a</td></tr>
+      <tr><td>Net change after costs</td><td>Σ(retained P&L) − Σ(baseline P&L), costs per A3 table</td><td class="num">n/a</td></tr>
+      <tr><td>Independent sessions</td><td>unique session dates in the evidence cell</td><td class="num">${sc.signals.map(s=>s.ev.n).join(' / ')}</td></tr>
+      <tr><td>Portfolio contribution</td><td>Δ worst-10%-day P&L of a FIXED baseline book</td><td class="num">n/a</td></tr></table></details>
+    <details><summary>Provenance (what replay needs)</summary>
+      <pre>strategy_version: ${sc.signals.map(s=>s.slot).join(' | ')}
+feature_config_hash: sample-9f3c  · data_snapshot_id: sample-2026-11-05T${sc.time.slice(0,5)}  · app_build: proto-0.1
+event_time drives display; ingest_time drives replay (as-of join: event_time ≤ t AND ingest_time ≤ t)</pre></details>`;
+  previous = i; current = i;
+}
+function whatWouldChange(sc, d){
+  const out = [];
+  for (const r of d.rows){
+    if (r.state==='INPUT UNAVAILABLE') out.push(`${r.s.slot.split(' ')[0]}: fresh ES print within staleness threshold → re-evaluate (evidence state would be ${evidenceState(r.s.ev)})`);
+    if (r.state==='ACCOUNT LIMIT REACHED') out.push(`${r.s.slot.split(' ')[0]}: closing the open position or a smaller stop (risk ≤ daily loss remaining) → unblocked`);
+    if (r.state==='INSUFFICIENT EVIDENCE') out.push(`${r.s.slot.split(' ')[0]}: ${Math.max(0,N_MIN-r.s.ev.n)} more sessions or a CI that excludes 0 → FAVORABLE/UNFAVORABLE`);
+    if (r.state==='HISTORICALLY UNFAVORABLE') out.push(`${r.s.slot.split(' ')[0]}: a new strategy version with its own pre-registered evidence cell`);
+    if (r.state==='FAVORABLE' && sc.condition.inputs.nextEvent && sc.condition.inputs.nextEvent!=='none ≤ 60 min') out.push(`${r.s.slot.split(' ')[0]}: inside the pre-release blackout window (e.g., 5 min before ${sc.condition.inputs.nextEvent}) → SKIP`);
+  }
+  if (!out.length) out.push('A stop-loss hit on an open position changes daily-loss remaining and may block later signals.');
+  return out;
+}
+const scenEl = document.getElementById('scen');
+scenarios.forEach((s,i)=>{ const b=document.createElement('button'); b.textContent=s.name; b.setAttribute('role','tab'); b.onclick=()=>render(i); scenEl.appendChild(b); });
+render(0);
+</script>
+</body>
+</html>

@@ -31,24 +31,11 @@ Only M2 is available *at* the decision instant; M1, M3, M4 require waiting n bar
 
 **Versioned definition template** (HYPOTHESIS; fill once, change by version only):
 
-```
-BREAK v<major.minor>
-  level_source: {OR_high/low | prior_session_high/low | IB | custom}
-  level_lookback: <bars or clock window, e.g. 09:30–10:00 ET>
-  trigger: {touch | 1 close | n closes, n=<int>}
-  threshold: <ticks | fraction of W>
-  re_arm: {never per side | after close back inside by <fraction W>}
-  session_window: <clock start–end ET>; instrument: <MNQ|NQ|ES|MES>
-FOLLOW_THROUGH v<major.minor>
-  horizon_K: <bars>; target: L + d*<multiple>*W; fail: L − d*<fraction>*W
-  resolution: first-hit of target (FT) or fail (FAILED); neither = UNRESOLVED
-DENOMINATORS (always report all):
-  sessions; sessions_with_break; breaks (per session); eligible_signals
-  (strategy triggers inside a break episode); trades_retained;
-  FT/break; FT/session; FT/eligible_signal; FAILED/..., UNRESOLVED/...
-```
+- BREAK v\<major.minor\>: level_source {OR high/low | prior-session high/low | IB | custom}; level_lookback \<bars or clock window\>; trigger {touch | 1 close | n closes}; threshold \<ticks | fraction of W\>; re_arm {never per side | after close back inside by \<fraction W\>}; session_window \<ET start–end\>; instrument.
+- FOLLOW_THROUGH v\<major.minor\>: horizon K \<bars\>; target L + d·\<multiple\>·W; fail L − d·\<fraction\>·W; resolution = first hit of target (FT) or fail (FAILED), neither = UNRESOLVED.
+- DENOMINATORS (always all): sessions; sessions_with_break; breaks per session; eligible_signals (strategy triggers inside a break episode); trades_retained; FT, FAILED, UNRESOLVED each per break, per session, per eligible signal.
 
-Any definition change is reported as a new row in a table whose columns are the denominators; the per-session row is the one that is comparable across versions because sessions are the independent unit.
+A definition change is a new row in a table whose columns are these denominators; the per-session row is comparable across versions because sessions are the independent unit.
 
 **SYNTHETIC EXAMPLE** (script and output at `/tmp/claude-0/-home-user-Testing/7cf3ca0b-ccdf-5806-aa57-684759b9781e/scratchpad/A4/break_defs.py`): 500 synthetic sessions of 390 one-minute bars, Gaussian random walk with lognormal per-session volatility, half the sessions given a mean-reverting pull after bar 30 to create ranges. Opening range = first 30 bars. B1 = one close ≥1 tick beyond OR; B2 = two consecutive closes ≥0.25·W beyond OR. Same follow-through rule (target 1.0·W, fail 0.25·W, K=10). Output:
 
@@ -82,14 +69,10 @@ Test spec (needs only the user's bar data and signal log): for every eligible si
 
 Filter under test: "skip entry when M2 (10-bar ER at decision) is in the bottom tercile of the trailing 20-session distribution for that minute-of-day."
 
-| Quantity | Computation |
-|---|---|
-| Eligible signals | all strategy-slot triggers in the session window, executed or not |
-| Trades retained | eligible signals with M2 ≥ tercile cut |
-| Losses avoided | filtered-out signals whose unfiltered simulated outcome < 0, counted and summed in $ |
-| Winners discarded | filtered-out signals whose outcome > 0, counted and summed in $ |
-| Net change after costs | Σ(retained outcomes) − Σ(unfiltered outcomes), with costs per round trip applied to both |
-| Independent sessions | number of sessions with ≥1 eligible signal; all CIs clustered at this level |
-| Portfolio contribution | change in daily P&L sum across all slots, and change in worst-day drawdown, since several slots fire on the same move |
-
-Word count ≈ 1,150.
+- Eligible signals: all strategy-slot triggers in the session window, executed or not.
+- Trades retained: eligible signals with M2 ≥ tercile cut.
+- Losses avoided: filtered-out signals whose unfiltered simulated outcome < 0; count and $ sum.
+- Winners discarded: filtered-out signals whose outcome > 0; count and $ sum.
+- Net change after costs: Σ(retained outcomes) − Σ(unfiltered outcomes), round-trip costs applied to both.
+- Independent sessions: sessions with ≥1 eligible signal; all CIs clustered here.
+- Portfolio contribution: change in daily P&L summed across all slots and in worst-day drawdown, since several slots fire on the same move.

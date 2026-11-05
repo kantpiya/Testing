@@ -2,13 +2,13 @@
 
 **Question:** When might rates, broad equity participation, or concentrated Nasdaq leadership explain an NQ move in a way that changes strategy selection?
 
-**Workspace status (OBSERVED):** No bars, logs, strategy code, or study reports exist in the container (confirmed by the common brief, section 1). Nothing below is backed by the user's data. Instrument facts are public (verify against CME specs). Everything else is HYPOTHESIS or SYNTHETIC EXAMPLE.
+**Workspace status (OBSERVED):** No bars, logs, strategy code, or study reports exist in the container (common brief, section 1). Instrument facts are public (verify against CME specs). Everything else is HYPOTHESIS or SYNTHETIC EXAMPLE.
 
 ## 1. Strongest finding or proposal, and the decision it would change
 
-**Proposal (HYPOTHESIS):** Treat the *source* of an NQ move as a gate on which strategy slot is eligible, not as a new entry signal. The same 40-point NQ rally at 10:05 ET admits three causal stories, and only one of them (concentrated mega-cap leadership) is cheaply distinguishable at entry from a futures-only feed. The decision it changes: whether a continuation slot (KX/PX-type breakouts, if those are continuation strategies — definitions unverified) or a fade slot (weak reversal / sell-off recovery) is eligible on that bar.
+**Proposal (HYPOTHESIS):** Treat the *source* of an NQ move as a gate on which strategy slot is eligible, not as a new entry signal. A 40-point NQ rally at 10:05 ET admits three causal stories; only the Nasdaq-specific one is cheaply distinguishable at entry from a futures-only feed. The decision it changes: whether a continuation slot (KX/PX, if those are continuation strategies; definitions unverified) or a fade slot (weak reversal, sell-off recovery) is eligible on that bar.
 
-**Strong simple baseline first:** a rule that conditions only on NQ's own 5/15/30-minute returns and minute-of-day. Any cross-asset factor must beat that baseline *after* the baseline is partialled out (section 3). Most cross-asset "context" fails this test because it is a linear recombination of NQ's own return.
+**Baseline first:** a rule conditioning only on NQ's own 5/15/30-minute returns and minute-of-day. Any cross-asset factor must beat that baseline *after* it is partialled out (section 3). Most cross-asset "context" fails because it is a linear recombination of NQ's own return.
 
 ## 2. Evidence (with labels) and the strongest competing explanation
 
@@ -74,10 +74,9 @@ Run the section-3 regression with **only futures-feed candidates** (ES, ZN, RTY,
 ## 6. Missing inputs that materially limit the conclusion
 
 - No bars exist in the workspace; nothing has been checked against real data.
-- Strategy definitions (KX, PX, engulfing, weak reversal, sell-off recovery) are unknown, so I cannot say which slot is "continuation" vs "fade"; the gating map in section 1 is a placeholder.
-- Logs must record, per signal: timestamp to the second, strategy slot, eligible/rejected flag and rejection reason, NQ/ES/ZN/RTY prices at the decision bar close, and the data source used. Without rejected signals, the "losses avoided" column is unestimable.
-- Whether the user's feed carries VX, and whether any equity/index data exists.
-- Contract roll convention used in the user's data.
+- Strategy definitions are unknown, so which slot is "continuation" vs "fade" is a placeholder.
+- Logs must record, per signal: timestamp to the second, slot, eligible/rejected flag with reason, and NQ/ES/ZN/RTY prices at decision-bar close. Without rejected signals, "losses avoided" is unestimable.
+- Whether the feed carries VX, whether any equity/index data exists, and the roll convention.
 
 ## 7. Filter accounting (the seven quantities in rule 3)
 

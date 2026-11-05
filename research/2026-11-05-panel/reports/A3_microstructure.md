@@ -9,7 +9,7 @@ HYPOTHESIS: the conditions that *look* most favorable in bar data — the openin
 
 ## 2. Evidence (with labels) and the strongest competing explanation
 
-- OBSERVED: nothing in the workspace. No fills, so realized slippage is unmeasurable here.
+- OBSERVED: nothing in the workspace; realized slippage is unmeasurable here.
 - EXTERNALLY SUPPORTED (public, verify against CME specs; search result only): NQ $5/tick, MNQ $0.50/tick, both 0.25-point ticks; MNQ is 1/10 NQ notional. CME publishes depth/volume statistics; MNQ volume exceeds NQ in contract count but not in notional.
 - HYPOTHESIS: in ordinary RTH the MNQ book is typically 1 tick wide with tens of contracts at the touch; NQ is 1 tick wide with single-digit to low-double-digit contracts. Market makers arbitrage the pair, so MNQ tracks NQ within ~1 tick at sub-second lag; the intraday basis is economically zero except in the first seconds after a release, when NQ reprices first and MNQ quotes are pulled or widen to several ticks.
 - HYPOTHESIS: stop-market orders at releases fill at the next traded price, which after a 30–60-point NQ gap can be far from the trigger. Stop-limits avoid that but may never fill.
@@ -17,7 +17,7 @@ HYPOTHESIS: the conditions that *look* most favorable in bar data — the openin
 
 ## 3. Worked example / reproducible check / formula / data spec
 
-**Fill-assumption table (all rows HYPOTHESIS, public, verify with own fills).** Spread in ticks; slippage in ticks beyond the touch; latency = signal-to-exchange-ack. Values are conservative / base / optimistic.
+**Fill-assumption table (all rows HYPOTHESIS, public, verify with own fills).** Slippage in ticks beyond the touch; latency = signal-to-exchange-ack; values conservative / base / optimistic.
 
 | Regime | Order | Spread (ticks) | Slippage (ticks) | Latency (ms) |
 |---|---|---|---|---|
@@ -58,22 +58,22 @@ Release 08:30/14:00   base       4.88     3.12    6.25       39%
 Release 08:30/14:00   opt        2.15     5.85   11.70       73%
 ```
 
-Reading: the same 8-point setup is worth $12–14 in RTH, $8–14 at the open, and anywhere from −$7.50 to +$11.70 around releases. The range of outcomes at releases is wider than the edge itself; this is not a parameter you can tune, it is a condition that must be measured from the user's own fills.
+Reading: the same 8-point setup is worth $12–14 in RTH, $8–14 at the open, and −$7.50 to +$11.70 around releases. At releases the uncertainty exceeds the edge itself; it must be measured from the user's own fills, not tuned.
 
 ## 4. When following this proposal would make the decision worse
 
-- If the user already has a fill log and realized slippage is near the optimistic column, applying the conservative column would wrongly retire a profitable release or open slot.
-- If a strategy's edge at the open is much larger than 8 points (plausible: the open has the largest ranges), even conservative costs leave it positive; the cost model should scale against the setup's own edge, not a fixed 8.
-- Switching stop-market to stop-limit to avoid slippage can convert a bounded loss into an unbounded one at a release gap; that is strictly worse than paying slippage.
-- Over-conservative modelling of limit fills (fill prob. 0.3) discards winners that would have filled; the balance between missed winners and avoided losers is empirical.
+- If realized slippage in the user's fill log is near the optimistic column, the conservative column would wrongly retire a profitable open or release slot.
+- If a slot's edge at the open is much larger than 8 points (plausible: largest ranges), conservative costs still leave it positive; cost must be compared with the slot's own edge, not a fixed 8.
+- Replacing stop-market with stop-limit to avoid slippage converts a bounded loss into an unbounded one at a release gap; strictly worse.
+- Over-conservative limit-fill probabilities (0.3) discard winners that would have filled; the balance is empirical.
 
 ## 5. Cheapest decisive test, and the result that would retire the idea
 
-Test: from the user's own executed-trade log, compute realized slippage = fill price − intended price (signal bar close for market entries, trigger price for stops), in ticks, per order type, bucketed by regime (RTH ordinary / 09:30–09:35 / release ±2 min). Requires fields: timestamp (ms), intended price, fill price, order type, side, instrument. Denominator: all filled orders per regime. Metric: median and 90th-percentile slippage per bucket; multiply by frequency of each order type to get net cost per trade. Retire the concern if the 90th-percentile cost per trade in the open and release buckets is below 25% of the slot's gross edge. Retire the slot if the median cost exceeds the gross edge. Minimum sample: ~50 orders per bucket for a usable 90th percentile; fewer means report the range and keep the conservative column.
+Test: from the user's executed-trade log, realized slippage = fill price − intended price (signal-bar close for market entries, trigger price for stops), in ticks, per order type, bucketed by regime (RTH ordinary / 09:30–09:35 / release ±2 min). Required fields: timestamp (ms), intended price, fill price, order type, side, instrument. Denominator: all filled orders per bucket. Metric: median and 90th-percentile slippage per bucket, weighted by order-type frequency to give net cost per trade. Retire the concern if the 90th-percentile cost in the open and release buckets is below 25% of the slot's gross edge; retire the slot if the median cost exceeds the gross edge. Minimum ~50 orders per bucket; fewer means report the range and keep the conservative column.
 
 ## 6. Missing inputs that materially limit the conclusion
 
-Fill log (none); broker/platform and routing latency (unknown); contract count per trade (unknown; the table assumes 1–5 MNQ); whether stops are server-side or platform-side (platform-side adds latency and disconnect risk); whether any slot trades inside release windows at all; whether the backtest fills at NQ or MNQ prices; bar resolution of the backtests (1-minute OHLC implies the same-bar ambiguity count must be reported). All instrument facts are "public, verify against CME specs."
+Fill log (none); broker/routing latency (unknown); contracts per trade (table assumes 1–5 MNQ); server-side vs platform-side stops (the latter adds latency and disconnect risk); whether any slot trades inside release windows; whether backtests fill at NQ or MNQ prices; backtest bar resolution (1-minute OHLC requires reporting the same-bar ambiguity count). Instrument facts are "public, verify against CME specs."
 
 ## 7. Filter accounting (the seven quantities in rule 3)
 
@@ -83,5 +83,5 @@ Proposed filter: exclude or re-cost trades whose entry timestamp is within 09:30
 - Losses avoided: sum of net P&L of excluded trades that were net negative after regime-specific cost.
 - Winners discarded: sum of net P&L of excluded trades that were net positive after regime-specific cost.
 - Net change after costs: (winners discarded − losses avoided), sign-corrected, using the base column; report also under the conservative column.
-- Independent trading sessions: count distinct trading days in which excluded trades occurred; the filter's effect is one observation per day, not per trade, because release-day trades are correlated.
-- Contribution to the portfolio: change in daily portfolio P&L distribution (mean, 5th percentile) with and without the filter, across all slots that share the windows; a filter that helps one slot and starves another sharing the same window nets to the portfolio figure, not the slot figure.
+- Independent trading sessions: distinct trading days containing excluded trades; one observation per day, since release-day trades are correlated.
+- Contribution to the portfolio: change in daily portfolio P&L (mean, 5th percentile) with and without the filter across all slots sharing the windows; the portfolio figure, not the slot figure, decides.
