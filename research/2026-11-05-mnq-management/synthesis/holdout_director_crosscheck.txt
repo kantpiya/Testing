@@ -1,0 +1,8 @@
+DATA=sealed/holdout  order=stop_first  slip=1 ticks   KX trades=60 sessions=60
+P0 vs journal: exact net on 59/59 non-MANUAL trades; journal net $5,271 vs replay $4,690; MANUAL=1
+C1: stall set n=13 sessions=13  P0 mean R=-0.11  C1 mean R=+0.34  paired dR=+0.454 [-0.53,+1.13]  d$=+866
+      KX_ORB_v2: n=13 dR=+0.454 [-0.53,+1.13]
+D3: stall set n=13 sessions=13  P0 mean R=-0.11  D3 mean R=-0.02  paired dR=+0.090 [-1.23,+1.29]  d$=+179
+      KX_ORB_v2: n=13 dR=+0.090 [-1.23,+1.29]
+D1: changed=26  paired d$=+19,137 [+4,983,+36,718]  dR/entry=+2.462 [+0.59,+4.79]  P0 total $4,690 -> $23,827
+      KX_ORB_v2: n=60 d$=+19,137
